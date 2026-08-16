@@ -34,14 +34,60 @@ module DynamoDBLocal
     "#{prefix}_#{UUID.random}"
   end
 
-  # Runs the block with a table that is deleted afterwards, whatever happens.
-  def with_table(client : Aws::DynamoDB::Client, name : String, **create_opts, &)
-    client.create_table(**{table_name: name}.merge(create_opts))
-    client.wait_until_table_exists(name, delay: 200.milliseconds, max_attempts: 50)
-    begin
-      yield name
-    ensure
-      client.delete_table(table_name: name)
-    end
+  # Provisioned throughput of one read and one write unit, which is all these specs need.
+  def throughput(read : Int64 = 1_i64, write : Int64 = 1_i64) : Aws::DynamoDB::Types::ProvisionedThroughput
+    Aws::DynamoDB::Types::ProvisionedThroughput.new(read_capacity_units: read, write_capacity_units: write)
+  end
+end
+
+# Marks the example pending unless the integration suite was asked for.
+def integration! : Nil
+  return if DynamoDBLocal.enabled?
+  pending!("set AWS_INTEGRATION=1 and run scripts/integration.sh")
+end
+
+# Points *model* at a fresh table, creates it with `TableMigration`, and drops it afterwards.
+#
+# Crystal models are static, so the table name is set at run time to keep concurrent runs apart.
+def with_model_table(model : Aws::Record::Base.class, **create_opts, & : Aws::DynamoDB::Client ->)
+  client = DynamoDBLocal.client
+  model.configure_client(client: client)
+  model.set_table_name(DynamoDBLocal.table_name(model.name.split("::").last))
+  migration = Aws::Record::TableMigration.new(model, client: client)
+  migration.create!(**{provisioned_throughput: DynamoDBLocal.throughput}.merge(create_opts))
+  migration.wait_until_available
+  begin
+    yield client
+  ensure
+    delete_table(client, model.table_name)
+  end
+end
+
+# Points *model* at a fresh table and yields a `TableConfig` builder for it, dropping it afterwards.
+def with_model_config(model : Aws::Record::Base.class, & : Aws::DynamoDB::Client, String ->)
+  client = DynamoDBLocal.client
+  model.configure_client(client: client)
+  name = DynamoDBLocal.table_name(model.name.split("::").last)
+  model.set_table_name(name)
+  begin
+    yield client, name
+  ensure
+    delete_table(client, name)
+  end
+end
+
+# Deletes *name*, ignoring a table that is already gone.
+def delete_table(client : Aws::DynamoDB::Client, name : String) : Nil
+  client.delete_table(table_name: name)
+rescue Aws::DynamoDB::Errors::ResourceNotFoundException
+  # already gone
+end
+
+# A `TableConfig` for *model* pointed at DynamoDB Local.
+def local_table_config(model : Aws::Record::Base.class, & : Aws::Record::TableConfig ->) : Aws::Record::TableConfig
+  Aws::Record::TableConfig.define do |table|
+    table.model_class model
+    yield table
+    table.client_options(DynamoDBLocal.client)
   end
 end

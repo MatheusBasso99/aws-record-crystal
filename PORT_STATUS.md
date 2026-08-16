@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 examples) hygiene ✅ compat-avram ✅ coverage 98.0 % — **unit parity complete: 372/372**
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 unit + 45 integration examples) hygiene ✅ compat-avram ✅ coverage 98.0 % — **unit parity 372/372, integration parity 45/45**
 
 ## Phase 0 — Bootstrap
 
@@ -80,16 +80,20 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 examples) hygien
 - [x] `batch_write.cr`, `batch_read.cr`, `batch.cr` (14/14)
 - [x] `transactions.cr` (12/12)
 
-## Phase 8 — Integration specs (DynamoDB Local) (0/45 scenarios)
+## Phase 8 — Integration specs (DynamoDB Local) (45/45 scenarios)
 
-- [ ] tables (0/4), on_demand_tables (0/1)
-- [ ] items (0/5), item_updates (0/5), item_default_values (0/1)
-- [ ] secondary_indexes (0/2)
-- [ ] search (0/6)
-- [ ] batch (0/1)
-- [ ] transactions (0/7)
-- [ ] table_config (0/11)
-- [ ] inheritance (0/2)
+- [x] tables (4/4), on_demand_tables (1/1)
+- [x] items (5/5), item_updates (5/5), item_default_values (1/1)
+- [x] secondary_indexes (2/2)
+- [x] search (6/6)
+- [x] batch (1/1)
+- [x] transactions (7/7)
+- [x] table_config (11/11)
+- [x] inheritance (2/2)
+
+Every Cucumber `Scenario:` name has an `it` with the same text, audited by script
+(45 scenarios / 45 examples, none missing, none extra). `scripts/integration.sh` runs them
+against DynamoDB Local in 0.4 s.
 
 ## Phase 9 — Docs, README, CHANGELOG, release hygiene
 
@@ -139,6 +143,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 examples) hygien
 | 4 | 98.32 | 88.24 % `dynamodb/types/common.cr` | no record file below 80 % |
 | 6 | 97.76 | 83.33 % `record/secondary_indexes.cr` | no record file below 80 % |
 | 7 | 97.96 | — | no record file below 80 % |
+| 8 | 97.96 | 83.33 % `record/secondary_indexes.cr` | unit suite only; integration specs are tagged out |
 
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 
@@ -195,3 +200,19 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 examples) hygien
   errors here, asserted by 11 fixtures under `spec/fixtures/compile_errors`. 484 unit examples;
   `scripts/compat_avram.sh` green against Avram 1.5.0. Next: Phase 4 (item operations + dirty tracking
   specs).
+- 2026-08-16 — Phase 4 complete: `ItemOperations` (save/save!/update/update!/delete!/find/find_with_opts/
+  find_all/tfind_opts/transact_check_expression, the `#UE_A`/`:ue_a` update expression builder) and
+  `DirtyTracking` (per-attribute dirty flags, mutation tracking by deep copy, `rollback!`, `reload!`),
+  with 89/89 ported examples. RSpec mock-based examples were rewritten against the stub client.
+- 2026-08-16 — Phase 5 complete: `Query`, `ItemCollection` (lazy, `Enumerable`, pages through the
+  paginator) and `BuildableSearch` with 25/25 ported examples.
+- 2026-08-16 — Phase 6 complete: `SecondaryIndexes` (LSI/GSI macros validated at compile time),
+  `TableMigration` and `TableConfig` with 79/79 ported examples.
+- 2026-08-16 — Phase 7 complete: `BatchWrite`, `BatchRead`, `Batch` and `Transactions` with 26/26 ported
+  examples. **Unit parity reached: 372/372**, audited by script against every RSpec `it` description.
+  691 unit examples, coverage 97.96 %.
+- 2026-08-16 — Phase 8 complete: all 45 Cucumber scenarios rewritten as `integration`-tagged specs under
+  `spec/integration`, green against DynamoDB Local (tables, on-demand tables, items, item updates,
+  default values, secondary indexes, search, batch, transactions, table config, inheritance). Scenario
+  names audited 45/45. Next: Phase 9 (README, CHANGELOG, docs, final summary).
+
