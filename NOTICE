@@ -1,0 +1,13 @@
+aws-record-crystal
+Copyright 2026 Matheus Basso
+
+This product is a Crystal port of and derivative work based on:
+
+  AWS Record (aws-record, version 2.15.1)
+  Copyright 2016 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+  https://github.com/aws/aws-record-ruby
+  Licensed under the Apache License, Version 2.0.
+
+Portions of the source code, documentation and test suite of this project are
+translations of the original Ruby gem and remain subject to the Apache License,
+Version 2.0, a copy of which is included in the LICENSE file.

@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    name: format + hygiene + ameba + specs (crystal ${{ matrix.crystal }})
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - crystal: "1.21.0"
+            experimental: false
+          - crystal: "nightly"
+            experimental: true
+    container:
+      image: crystallang/crystal:${{ matrix.crystal }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache shards
+        uses: actions/cache@v4
+        with:
+          path: lib
+          key: shards-${{ matrix.crystal }}-${{ hashFiles('shard.yml') }}
+      - run: scripts/setup.sh
+      - run: scripts/check.sh
+
+  coverage:
+    name: coverage (kcov >= 90%)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/coverage.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+
+  integration:
+    name: integration specs (DynamoDB Local)
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:1.21.0
+    services:
+      dynamodb-local:
+        image: amazon/dynamodb-local:latest
+        ports: ["8000:8000"]
+    steps:
+      - uses: actions/checkout@v4
+      - run: shards install
+      - name: Run integration specs
+        env:
+          AWS_INTEGRATION: "1"
+          DYNAMODB_ENDPOINT: http://dynamodb-local:8000
+          AWS_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: local
+          AWS_SECRET_ACCESS_KEY: local
+        run: crystal spec --error-on-warnings --tag integration spec/integration
+
+  compat-avram:
+    name: coexistence with Avram/Lucky
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:1.21.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: scripts/compat_avram.sh
+
+  docs:
+    name: crystal docs
+    runs-on: ubuntu-latest
+    container:
+      image: crystallang/crystal:1.21.0
+    steps:
+      - uses: actions/checkout@v4
+      - run: shards install
+      - run: crystal docs --output=docs/api
+      - uses: actions/upload-artifact@v4
+        with:
+          name: api-docs
+          path: docs/api/

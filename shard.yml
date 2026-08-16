@@ -1,0 +1,28 @@
+name: aws-record-crystal
+version: 0.1.0
+description: Object mapping abstraction for Amazon DynamoDB — Crystal port of the aws-record Ruby gem.
+
+authors:
+  - Matheus Basso <mfsb13@gmail.com>
+
+crystal: ">= 1.21.0"
+license: Apache-2.0
+
+dependencies:
+  awscr-signer:
+    github: taylorfinnell/awscr-signer
+    version: ~> 0.9.0
+
+development_dependencies:
+  webmock:
+    github: manastech/webmock.cr
+    branch: master
+  ameba:
+    github: crystal-ameba/ameba
+    # 1.6.4 does not compile on Crystal 1.21 (postinstall uses -Dpreview_mt + old lexer);
+    # pinned to master until 1.7.0 is released. `shards build ameba` builds bin/ameba (no -Dpreview_mt).
+    commit: fcbd5703c50b47a5f280a11ab1c3416f5f3a9ea9
+
+targets:
+  ameba:
+    main: lib/ameba/bin/ameba.cr

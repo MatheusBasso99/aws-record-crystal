@@ -1,0 +1,10 @@
+name: avram_app
+version: 0.1.0
+crystal: ">= 1.21.0"
+license: Apache-2.0
+dependencies:
+  avram:
+    github: luckyframework/avram
+    version: ~> 1.5.0
+  aws-record-crystal:
+    path: ../..

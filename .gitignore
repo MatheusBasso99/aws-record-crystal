@@ -1,0 +1,14 @@
+/docs/api/
+/lib/
+/bin/
+/.shards/
+/coverage/
+*.dwarf
+
+/compat/avram_app/lib/
+/compat/avram_app/bin/
+/compat/avram_app/shard.lock
+
+# Libraries don't need dependency lock
+# Dependencies will be locked in applications that use them
+/shard.lock

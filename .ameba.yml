@@ -1,0 +1,58 @@
+Globs:
+  - "**/*.cr"
+  - "!lib"
+  - "!compat/**/lib/**/*"
+
+Excluded:
+  - lib
+  - docs
+
+Layout/LineLength:
+  Enabled: true
+  MaxLength: 120
+
+Metrics/CyclomaticComplexity:
+  Enabled: true
+  MaxComplexity: 11
+
+Documentation/Documentation:
+  Enabled: true
+  IgnoreClasses: false
+  IgnoreModules: false
+  IgnoreEnums: false
+  IgnoreDefs: false
+  IgnoreMacros: false
+  IgnoreMacroHooks: true
+  Excluded:
+    - spec/**/*
+    - compat/**/*
+
+Typing/MethodReturnTypeRestriction:
+  Enabled: true
+  PrivateMethods: false
+  ProtectedMethods: false
+  NodocMethods: false
+  Excluded:
+    - spec/**/*
+    - compat/**/*
+
+Typing/MethodParameterTypeRestriction:
+  Enabled: true
+  DefaultValue: true
+  BlockParameters: false
+  PrivateMethods: false
+  ProtectedMethods: false
+  NodocMethods: false
+  Excluded:
+    - spec/**/*
+    - compat/**/*
+
+Style/PercentLiteralDelimiters:
+  Enabled: true
+
+Lint/SpecFilename:
+  Excluded:
+    - spec/spec_runner.cr
+
+Lint/Typos:
+  Enabled: false

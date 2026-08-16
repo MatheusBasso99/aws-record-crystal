@@ -1,0 +1,9 @@
+FROM crystallang/crystal:1.21.0
+ARG KCOV_VERSION=v43
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      binutils-dev build-essential cmake git libcurl4-openssl-dev libdw-dev libiberty-dev libssl-dev ninja-build python3 zlib1g-dev ca-certificates \
+    && git clone -q --depth 1 --branch ${KCOV_VERSION} https://github.com/SimonKagstrom/kcov.git /tmp/kcov \
+    && cmake -S /tmp/kcov -B /tmp/kcov/build -G Ninja -DCMAKE_BUILD_TYPE=Release >/dev/null \
+    && cmake --build /tmp/kcov/build >/dev/null && cmake --install /tmp/kcov/build >/dev/null \
+    && rm -rf /tmp/kcov /var/lib/apt/lists/*
+WORKDIR /work
