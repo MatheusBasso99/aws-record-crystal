@@ -175,6 +175,18 @@ describe Aws::DynamoDB::Types do
     end
   end
 
+  describe "round trips" do
+    it "re-serializes a BatchGetItem output to the wire form it was parsed from" do
+      json = %({"Responses":{"T":[{"id":{"N":"1"}},{"id":{"N":"2"}}]}})
+      Aws::DynamoDB::Types::BatchGetItemOutput.from_json(json).to_wire.to_json.should eq(json)
+    end
+
+    it "re-serializes a Query output to the wire form it was parsed from" do
+      json = %({"Items":[{"id":{"N":"1"}}],"Count":1})
+      Aws::DynamoDB::Types::QueryOutput.from_json(json).to_wire.to_json.should eq(json)
+    end
+  end
+
   describe "transactions" do
     it "builds a TransactGetItems input" do
       input = Aws::DynamoDB::Types::TransactGetItemsInput.new(
