@@ -22,6 +22,7 @@ DynamoDB client (`Aws::DynamoDB`) because there is no AWS SDK for Crystal.
   * [Inheritance support](#inheritance-support)
 * [Differences from the Ruby gem](#differences-from-the-ruby-gem)
 * [Using with Lucky/Avram](#using-with-luckyavram)
+  * [Creating the tables](#creating-the-tables)
 * [Development](#development)
 * [License](#license)
 
@@ -351,6 +352,57 @@ In specs, `DynamoRecord.configure_client(client: Aws::DynamoDB::Client.new(stub_
 the spec helper points every model at the stub. Do it before any model is used: as in the Ruby gem, a
 subclass remembers the client it resolved on first use, so reconfiguring the base later does not reach
 models that already have one (call `configure_client` on those directly).
+
+### Creating the tables
+
+`Aws::Record::TableConfig#migrate!` is the DynamoDB counterpart of `lucky db.migrate`, and it is
+idempotent: it creates a missing table and waits for it to become `ACTIVE`, applies only what differs
+(billing mode, throughput, global secondary indexes, TTL) to an existing one, and does nothing when the
+table already matches. It never deletes a table, drops an index or touches data — and a key schema
+cannot be changed in place, that takes a new table.
+
+Keep it in a task of its own rather than in the seed task: schema and data are separate steps, the task
+can run on every deploy without seeding, and `migrate!` blocks while a real table or index is being
+created (instant on DynamoDB Local). Never run it at application boot.
+
+Define one `TableConfig` per model in one place. Note that a `TableConfig` builds **its own client**
+from the environment unless told otherwise — exactly like the Ruby gem — so pass it the client the
+models use, or a dev setup pointed at DynamoDB Local would migrate against the real service:
+
+```crystal
+# db/dynamodb/tables.cr
+module DynamoTables
+  SESSIONS = Aws::Record::TableConfig.define do |table|
+    table.model_class(Session)             # first: ttl_attribute is validated against the model
+    table.billing_mode("PAY_PER_REQUEST")  # no capacity to plan; PROVISIONED needs read/write_capacity_units
+    table.ttl_attribute(:expires_at)       # an epoch_time_attr, which is what DynamoDB TTL expects
+    table.client_options(client: DYNAMODB) # same endpoint and credentials as the models
+  end
+
+  CARTS = Aws::Record::TableConfig.define do |table|
+    table.model_class(Cart)
+    table.billing_mode("PAY_PER_REQUEST")
+    table.client_options(client: DYNAMODB)
+  end
+
+  ALL = [SESSIONS, CARTS]
+end
+```
+
+```crystal
+# tasks/dynamodb/migrate.cr — `lucky dynamodb.migrate`
+class Dynamodb::Migrate < LuckyTask::Task
+  summary "Create or update the DynamoDB tables (idempotent)"
+
+  def call
+    DynamoTables::ALL.each(&.migrate!)
+  end
+end
+```
+
+Call `lucky dynamodb.migrate` from `script/setup` and from the deploy, before `lucky db.seed.required_data`.
+`TableConfig#compatible?` and `#exact_match?` answer without changing anything, which makes a
+`dynamodb.check` task for CI — failing when a model changed and nobody migrated — a few lines.
 
 Things worth knowing:
 
