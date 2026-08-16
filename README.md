@@ -34,7 +34,7 @@ Requires Crystal 1.21.0 or newer. Add the dependency to your `shard.yml`:
 ```yaml
 dependencies:
   aws-record-crystal:
-    github: matheusbasso/aws-record-crystal
+    github: MatheusBasso99/aws-record-crystal
 ```
 
 Then run `shards install`. The only runtime dependency is
