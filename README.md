@@ -305,24 +305,52 @@ you will notice first:
 The shard is built to sit next to an [Avram](https://github.com/luckyframework/avram) model layer in a
 Lucky app, and `scripts/compat_avram.sh` type-checks the two together on every CI run.
 
-Give your DynamoDB models a shared base, the way Avram apps have a `BaseModel`. An abstract model with
-no attributes of its own is allowed — it only carries configuration:
+Any model can simply inherit from `Aws::Record::Base`, exactly as in the [Usage](#usage) section. In
+an app with several DynamoDB models, though, it pays to give them a shared base, the way Avram apps
+have a `BaseModel`: an abstract model with no attributes of its own is allowed, and it only carries
+configuration (`configure_client`, `disable_mutation_tracking`, …) that every subclass inherits.
+Without it, each model builds its own client — with its own connection pool — from the environment on
+first use.
+
+Build the client once, at boot:
 
 ```crystal
-# config/dynamodb.cr — build the client once, at boot.
+# config/dynamodb.cr
 DYNAMODB = Aws::DynamoDB::Client.new(region: "us-east-1")
+```
 
+Keep the shared base in its own file — it is the only place that mentions the client:
+
+```crystal
 # src/models/dynamo_record.cr
 abstract class DynamoRecord < Aws::Record::Base
   configure_client(client: DYNAMODB)
 end
+```
 
+Then every model gets a file of its own and looks the same; each one uses `DYNAMODB` without saying so:
+
+```crystal
+# src/models/session.cr
 class Session < DynamoRecord
   string_attr :sid, hash_key: true
   datetime_attr :created_at
   epoch_time_attr :expires_at
 end
 ```
+
+```crystal
+# src/models/cart.cr
+class Cart < DynamoRecord
+  string_attr :user_id, hash_key: true
+  list_attr :items
+end
+```
+
+In specs, `DynamoRecord.configure_client(client: Aws::DynamoDB::Client.new(stub_responses: true))` in
+the spec helper points every model at the stub. Do it before any model is used: as in the Ruby gem, a
+subclass remembers the client it resolved on first use, so reconfiguring the base later does not reach
+models that already have one (call `configure_client` on those directly).
 
 Things worth knowing:
 
