@@ -56,3 +56,8 @@ Lint/SpecFilename:
 
 Lint/Typos:
   Enabled: false
+
+# `set_table_name` mirrors the Ruby gem's public API; the gem disables the same rubocop cop for it.
+Naming/AccessorMethodName:
+  Excluded:
+    - src/aws-record/record/base.cr

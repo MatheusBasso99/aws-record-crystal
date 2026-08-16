@@ -9,6 +9,18 @@ Spec files that assert a divergent behavior carry a comment pointing at the rele
   not supertypes of the including classes' metaclasses, so heterogeneous collections of *model classes*
   (`BatchRead`'s table→class map, `Transactions.transact_find`, `ItemCollection#multi_model_filter`,
   `TableConfig#model_class`) are impossible with a module. An abstract base class makes all of them work.
+- **Modelling mistakes are compile errors.** Duplicate attribute names, an attribute that is both hash
+  and range key, storage name collisions, reserved names and non-symbol attribute names are raised by
+  the attribute macros at compile time, where the Ruby gem raises `Errors::NameCollision`,
+  `Errors::ReservedName` or `ArgumentError` when the class body runs. Passing an unknown attribute to
+  `Model.new` or `#assign_attributes`, or a non-integer to `increment_<name>!`, is a compile error too.
+  `Aws::Record::ModelAttributes` keeps the runtime checks for models that register attributes themselves.
+- **Mutation tracking and the table name are inherited by lookup, not by snapshot.** The Ruby gem copies
+  the parent's setting into the child when the child's class body runs, so the result depends on
+  definition order; here a child with no setting of its own asks its parent every time.
+- **Attribute setters accept any value (`value : _`)**, as Ruby's do, while getters are precisely typed
+  (`Time?`, `Set(String)`, `Int64?`, …). A union type cannot express "any collection", so typing the
+  setters would have rejected `item.tags = ["a", "b"]`.
 
 ## Types
 
@@ -43,6 +55,16 @@ Spec files that assert a divergent behavior carry a comment pointing at the rele
 - **Custom formatters are `Proc(Time, String)`** rather than an object responding to `.format`.
 
 ## Client and options
+
+- **Pass-through options are typed.** Where Ruby forwards an arbitrary options hash to the SDK, the
+  record layer builds the operation's input shape, so naming an option the operation does not have is
+  a compile error rather than a runtime `ArgumentError` from the SDK.
+- **`increment_<name>!` substitutes the attribute's *storage* name.** The Ruby gem substitutes the
+  attribute name, which writes to the wrong DynamoDB attribute when the counter has a
+  `database_attribute_name`.
+- **`#assign_attributes(item)` accepts attribute names *and* storage names.** The Ruby gem folds a
+  response's `attributes` back in by attribute name only, which raises for any attribute with a
+  `database_attribute_name`.
 
 ## Errors
 

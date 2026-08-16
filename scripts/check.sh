@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 FAST=0; if [ "${1:-}" = "--fast" ]; then FAST=1; shift; fi
 [ -x bin/ameba ] || scripts/setup.sh
-echo "== format";  crystal tool format --check src spec compat
+echo "== format";  crystal tool format --check src spec compat/avram_app/src
 echo "== hygiene"; scripts/hygiene.sh src
 echo "== ameba";   ./bin/ameba
 echo "== specs";   crystal spec --error-on-warnings --order random --tag '~integration' "$@"

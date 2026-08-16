@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (403 examples) hygiene ✅ coverage 98.1 % (phase 1) — phases 0-2 done
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (484 examples) hygiene ✅ compat-avram ✅ — phases 0-3 done
 
 ## Phase 0 — Bootstrap
 
@@ -46,17 +46,17 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (403 examples) hygien
 - [x] `attribute.cr` + `DefaultMarshaler` (9/9, plus 8 extras)
 - [x] `spec/aws-record/wire_compat_spec.cr` (§4.6 table, every row) — 18 examples
 
-## Phase 3 — Model core (parity 0/47)
+## Phase 3 — Model core (parity 47/47)
 
-- [ ] `errors.cr` (record layer)
-- [ ] `key_attributes.cr`
-- [ ] `model_attributes.cr`
-- [ ] `item_data.cr`
-- [ ] `client_configuration.cr` (0/2)
-- [ ] `attributes.cr` (instance side) (0/27)
-- [ ] `base.cr` — `Aws::Record::Base`, DSL macros, `__aws_record_finalize`, `RecordClassMethods` (0/18)
-- [ ] compile-error fixtures (`spec/fixtures/compile_errors/*.cr`) + runner helper
-- [ ] `scripts/compat_avram.sh` green with the full `compat/avram_app/src/app.cr`
+- [x] `errors.cr` (record layer)
+- [x] `key_attributes.cr` (in `model_attributes.cr`, with `ModelDefinition`)
+- [x] `model_attributes.cr` — 13 examples
+- [x] `item_data.cr` — 18 examples
+- [x] `client_configuration.cr` (2/2, plus 3 extras)
+- [x] attribute DSL and instance side (27/27) — in `base.cr`
+- [x] `base.cr` — `Aws::Record::Base`, DSL macros, `__aws_record_finalize`, `RecordClassMethods` (18/18)
+- [x] compile-error fixtures (`spec/fixtures/compile_errors/*.cr`, 11 of them) + runner helper
+- [x] `scripts/compat_avram.sh` green with the full `compat/avram_app/src/app.cr` (Avram 1.5.0)
 
 ## Phase 4 — Item operations + dirty tracking (parity 0/89)
 
@@ -103,11 +103,11 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (403 examples) hygien
 
 | Ruby spec file | examples | ported | notes |
 | --- | ---: | ---: | --- |
-| record_spec.rb | 18 | 0 | |
+| record_spec.rb | 18 | 18 | |
 | record/attribute_spec.rb | 9 | 9 | + 8 extras |
-| record/attributes_spec.rb | 27 | 0 | |
+| record/attributes_spec.rb | 27 | 27 | 9 are compile-error fixtures |
 | record/batch_spec.rb | 14 | 0 | |
-| record/client_configuration_spec.rb | 2 | 0 | |
+| record/client_configuration_spec.rb | 2 | 2 | + 3 extras |
 | record/dirty_tracking_spec.rb | 52 | 0 | |
 | record/item_collection_spec.rb | 18 | 0 | |
 | record/item_operations_spec.rb | 37 | 0 | |
@@ -128,7 +128,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (403 examples) hygien
 | record/table_config_spec.rb | 47 | 0 | |
 | record/table_migration_spec.rb | 21 | 0 | |
 | record/transactions_spec.rb | 12 | 0 | |
-| **total** | **372** | **106** | |
+| **total** | **372** | **153** | |
 
 ## Coverage history
 
@@ -176,3 +176,10 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (403 examples) hygien
   `TimeParsing`, with 106/106 ported examples plus the wire compatibility table. Every date/time wire
   format was checked against system Ruby and matches byte for byte, as does `String#succ`.
   403 unit examples, `crystal tool unreachable` empty. Next: Phase 3 (model core).
+- 2026-08-16 — Phase 3 complete: `Aws::Record::Base` with the attribute DSL (compile-time registry
+  merged across ancestors in `macro finished`), `ModelAttributes`/`KeyAttributes`/`ModelDefinition`,
+  `ItemData`, `ClientConfiguration` and the record errors, plus the item operations and dirty tracking
+  the atomic counter needs. Modelling mistakes the Ruby gem raises at class-definition time are compile
+  errors here, asserted by 11 fixtures under `spec/fixtures/compile_errors`. 484 unit examples;
+  `scripts/compat_avram.sh` green against Avram 1.5.0. Next: Phase 4 (item operations + dirty tracking
+  specs).
