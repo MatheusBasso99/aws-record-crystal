@@ -14,7 +14,7 @@ Updated: 2026-08-15. Gates: format ✅ ameba ✅ specs ✅ (2 examples) coverage
 
 ## Phase 1 — DynamoDB client (`Aws::DynamoDB`)
 
-- [ ] `value.cr` + `attribute_value.cr` (+ specs, incl. round-trip over all Value shapes)
+- [x] `value.cr` + `attribute_value.cr` (+ specs, incl. round-trip over all Value shapes) — 72 examples
 - [ ] `errors.cr` (+ specs)
 - [ ] `config.cr` + `credentials.cr` (+ specs, ENV isolation)
 - [ ] `types/*` — Input structs (`merge`/`to_wire`) + Output structs (`from_json`)

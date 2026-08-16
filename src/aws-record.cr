@@ -3,3 +3,4 @@
 # Crystal is mostly order-independent, but macros used by `record/base.cr` must be defined
 # before use, so the order below is explicit and intentional.
 require "./aws-record/version"
+require "./aws-record/dynamodb"
