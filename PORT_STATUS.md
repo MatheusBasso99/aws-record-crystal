@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (628 examples) hygiene ✅ compat-avram ✅ coverage 98.3 % — phases 0-5 done
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygiene ✅ compat-avram ✅ coverage 97.8 % — phases 0-6 done
 
 ## Phase 0 — Bootstrap
 
@@ -69,11 +69,11 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (628 examples) hygien
 - [x] `buildable_search.cr` (+ 4 extra examples)
 - [x] `query.cr` (7/7)
 
-## Phase 6 — Secondary indexes, TableMigration, TableConfig (parity 0/79)
+## Phase 6 — Secondary indexes, TableMigration, TableConfig (parity 79/79)
 
-- [ ] `secondary_indexes.cr` (0/11)
-- [ ] `table_migration.cr` (0/21)
-- [ ] `table_config.cr` (0/47)
+- [x] `secondary_indexes.cr` (11/11)
+- [x] `table_migration.cr` (21/21)
+- [x] `table_config.cr` (47/47)
 
 ## Phase 7 — Batch + Transactions (parity 0/26)
 
@@ -124,11 +124,11 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (628 examples) hygien
 | record/marshalers/string_set_marshaler_spec.rb | 8 | 8 | |
 | record/marshalers/time_marshaler_spec.rb | 11 | 11 | + 1 extra |
 | record/query_spec.rb | 7 | 7 | + 4 extras |
-| record/secondary_indexes_spec.rb | 11 | 0 | |
-| record/table_config_spec.rb | 47 | 0 | |
-| record/table_migration_spec.rb | 21 | 0 | |
+| record/secondary_indexes_spec.rb | 11 | 11 | 5 are compile-error fixtures |
+| record/table_config_spec.rb | 47 | 47 | + 1 extra |
+| record/table_migration_spec.rb | 21 | 21 | 1 is a compile-error fixture |
 | record/transactions_spec.rb | 12 | 0 | |
-| **total** | **372** | **265** | |
+| **total** | **372** | **344** | |
 
 ## Coverage history
 
@@ -137,6 +137,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (628 examples) hygien
 | 0 | n/a | n/a | `src/` is only the version constant |
 | 1 | 98.07 | 88.24 % `dynamodb/types/common.cr` | gate 85 %, target 90 % |
 | 4 | 98.32 | 88.24 % `dynamodb/types/common.cr` | no record file below 80 % |
+| 6 | 97.76 | 83.33 % `record/secondary_indexes.cr` | no record file below 80 % |
 
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 
@@ -148,7 +149,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (628 examples) hygien
 - `Aws::Record::Base.explicit_table_name?` and `Aws::Record::ClientConfiguration#explicit_dynamodb_client?`
   are the defaults every model overrides in `macro finished`; they exist so that the methods are on the
   `Base.class` virtual method table.
-- `Aws::Record::Base.model_valid?` is called by `TableMigration`, which lands in Phase 6.
+- `Aws::Record::Base.model_valid?` is called by `TableMigration`; covered since Phase 6.
 
 ## Known limitations / follow-ups
 

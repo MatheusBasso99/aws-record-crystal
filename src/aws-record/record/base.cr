@@ -50,6 +50,12 @@ abstract class Aws::Record::Base
   # :nodoc:
   KEY_DEFS = {} of Nil => Nil
 
+  # :nodoc:
+  LSI_DEFS = {} of Nil => Nil
+
+  # :nodoc:
+  GSI_DEFS = {} of Nil => Nil
+
   @@table_name : String? = nil
   @@track_mutations : Bool? = nil
   @@definition : Aws::Record::ModelDefinition? = nil
@@ -63,6 +69,12 @@ abstract class Aws::Record::Base
 
     # :nodoc:
     KEY_DEFS = {} of Nil => Nil
+
+    # :nodoc:
+    LSI_DEFS = {} of Nil => Nil
+
+    # :nodoc:
+    GSI_DEFS = {} of Nil => Nil
 
     macro finished
       __aws_record_finalize
@@ -476,6 +488,8 @@ abstract class Aws::Record::Base
       def self.explicit_dynamodb_client? : Aws::DynamoDB::Client?
         @@dynamodb_client{% if inherits_model %} || {{ parent }}.explicit_dynamodb_client?{% end %}
       end
+
+      __aws_record_finalize_indexes
 
       {% for key, value in own %}
         {% name = key.id.stringify %}

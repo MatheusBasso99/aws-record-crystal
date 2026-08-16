@@ -15,6 +15,12 @@ module ClientConfigurationSpec
 
   class UserAgentModel < Aws::Record::Base
   end
+
+  # `Aws::Record::Batch` and `Aws::Record::Transactions` extend the module the same way, without
+  # being models; that path is what these examples cover.
+  class BareExtender
+    extend Aws::Record::ClientConfiguration
+  end
 end
 
 describe "ClientConfiguration" do
@@ -34,6 +40,24 @@ describe "ClientConfiguration" do
 
       ClientConfigurationSpec::OwnClientChild.dynamodb_client
         .should_not be(ClientConfigurationSpec::OwnClientParent.dynamodb_client)
+    end
+  end
+
+  describe "a class that is not a model" do
+    it "keeps a client of its own" do
+      client = stub_client
+      ClientConfigurationSpec::BareExtender.configure_client(client: client)
+      ClientConfigurationSpec::BareExtender.dynamodb_client.should be(client)
+      ClientConfigurationSpec::BareExtender.explicit_dynamodb_client?.should be(client)
+    end
+
+    it "builds a default client on first use" do
+      built = without_aws_env({"AWS_REGION" => "us-east-1", "AWS_ACCESS_KEY_ID" => "a",
+                               "AWS_SECRET_ACCESS_KEY" => "b"}) do
+        ClientConfigurationSpec::BareExtender.configure_client(stub_responses: true)
+        ClientConfigurationSpec::BareExtender.dynamodb_client
+      end
+      built.config.stub_responses?.should be_true
     end
   end
 

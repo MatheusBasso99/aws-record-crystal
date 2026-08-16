@@ -6,6 +6,8 @@ module QuerySpec
     integer_attr :id, hash_key: true
     date_attr :date, range_key: true
     string_attr :body
+
+    global_secondary_index :reverse, hash_key: :date, range_key: :id, projection: {projection_type: "ALL"}
   end
 end
 
@@ -186,5 +188,3 @@ describe "Query" do
 end
 
 # Parity: 7/7 examples from spec/aws-record/record/query_spec.rb (aws-record 2.15.1), plus extras.
-# The Ruby model also declares a global secondary index, which is only used by `on_index(:reverse)`;
-# secondary indexes land in Phase 6.
