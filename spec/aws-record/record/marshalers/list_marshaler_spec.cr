@@ -44,6 +44,27 @@ describe Aws::Record::Marshalers::ListMarshaler do
       end
     end
   end
+
+  describe "collections other than arrays" do
+    marshaler = Aws::Record::Marshalers::ListMarshaler.new
+
+    it "turns a string set into a list" do
+      marshaler.type_cast(Set{"a", "b"}).should eq(["a", "b"] of Aws::DynamoDB::Value)
+    end
+
+    it "turns a numeric set into a list" do
+      marshaler.type_cast(Set{BigDecimal.new(1)}).should eq([BigDecimal.new(1)] of Aws::DynamoDB::Value)
+    end
+
+    it "turns a binary set into a list" do
+      marshaler.type_cast(Set{"a".to_slice}).should eq(["a".to_slice] of Aws::DynamoDB::Value)
+    end
+
+    it "raises for a value it cannot turn into a list" do
+      expect_raises(ArgumentError, "into an array!") { marshaler.type_cast(Time.utc) }
+      expect_raises(ArgumentError, "into an array!") { marshaler.type_cast(true) }
+    end
+  end
 end
 
 # Parity: 7/7 examples from spec/aws-record/record/marshalers/list_marshaler_spec.rb (aws-record 2.15.1)

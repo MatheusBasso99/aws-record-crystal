@@ -41,7 +41,18 @@ class Aws::Record::Base
   # *force*, the item is simply put, overwriting whatever is in the table.
   #
   # Any other keyword argument is passed through to the underlying client call.
-  def save(force : Bool = false, **opts) : Bool
+  def save(force : Bool = false, **opts : **T) : Bool forall T
+    # Which operation runs is only known at run time, so `#save` cannot simply build one input shape;
+    # an option neither `put_item` nor `update_item` has is rejected here instead.
+    {%
+      put_fields = Aws::DynamoDB::Types::PutItemInput.resolve.constant(:FIELD_NAMES)
+      update_fields = Aws::DynamoDB::Types::UpdateItemInput.resolve.constant(:FIELD_NAMES)
+      T.keys.each do |key|
+        unless put_fields.includes?(key.stringify) || update_fields.includes?(key.stringify)
+          raise "Unknown option #{key} for #save; put_item and update_item have no such parameter"
+        end
+      end
+    %}
     saved = valid? ? perform_save(force, **opts) : false
     clean!
     saved
@@ -60,7 +71,7 @@ class Aws::Record::Base
   end
 
   # Deletes the item with this item's key.
-  def delete!(**opts) : Nil
+  def delete!(**opts) : Bool
     input = Aws::DynamoDB::Types::DeleteItemInput.new(**opts).merge(
       table_name: self.class.table_name, key: key_values
     )
@@ -178,7 +189,7 @@ class Aws::Record::Base
   private def perform_save(force : Bool, **opts) : Bool
     if force
       dynamodb_client.put_item(
-        Aws::DynamoDB::Types::PutItemInput.new(**opts).merge(
+        Aws::DynamoDB::Types::PutItemInput.from_options(**opts).merge(
           table_name: self.class.table_name, item: build_item_for_save
         )
       )
@@ -194,7 +205,7 @@ class Aws::Record::Base
 
   private def safe_put(**opts) : Nil
     condition, names = prevent_overwrite_expression
-    input = Aws::DynamoDB::Types::PutItemInput.new(**opts).merge(
+    input = Aws::DynamoDB::Types::PutItemInput.from_options(**opts).merge(
       table_name: self.class.table_name,
       item: build_item_for_save,
       condition_expression: condition,
@@ -212,7 +223,7 @@ class Aws::Record::Base
 
   private def perform_update(**opts) : Nil
     expression = self.class.build_update_expression(dirty_changes_for_update)
-    input = self.class.merge_update_expression(Aws::DynamoDB::Types::UpdateItemInput.new(**opts), expression)
+    input = self.class.merge_update_expression(Aws::DynamoDB::Types::UpdateItemInput.from_options(**opts), expression)
     response = dynamodb_client.update_item(
       input.merge(table_name: self.class.table_name, key: key_values)
     )
@@ -256,6 +267,13 @@ class Aws::Record::Base
   #
   # Raises `Errors::KeyMissing` when a key attribute is not given.
   def self.update(**attrs) : Nil
+    update(attrs)
+  end
+
+  # :ditto:
+  #
+  # This form takes the pass-through options separately, as the Ruby gem's second argument does.
+  def self.update(attrs : NamedTuple, **opts) : Nil
     values = raw_value_hash(attrs)
     key = Aws::DynamoDB::Item.new
     keys.each_value do |name|
@@ -265,8 +283,24 @@ class Aws::Record::Base
       key[attribute.database_name] = attribute.serialize(raw) if attribute
     end
     expression = build_update_expression(values)
-    input = merge_update_expression(Aws::DynamoDB::Types::UpdateItemInput.new, expression)
+    input = merge_update_expression(Aws::DynamoDB::Types::UpdateItemInput.new(**opts), expression)
     dynamodb_client.update_item(input.merge(table_name: table_name, key: key))
+  end
+
+  # Builds a check to run as part of a transactional write, with this model's table and key.
+  #
+  # ```
+  # check = MyModel.transact_check_expression(
+  #   key: {uuid: "foo"},
+  #   condition_expression: "size(#T) <= :v",
+  #   expression_attribute_names: {"#T" => "body"},
+  #   expression_attribute_values: Aws::DynamoDB::Item{":v" => 1024_i64}
+  # )
+  # ```
+  def self.transact_check_expression(key : NamedTuple, **opts) : Aws::DynamoDB::Types::ConditionCheck
+    Aws::DynamoDB::Types::ConditionCheck.new(**opts).merge(
+      table_name: table_name, key: serialize_key(raw_value_hash(key))
+    )
   end
 
   # Builds an item of this model from a DynamoDB item, marked as already persisted.

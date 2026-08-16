@@ -44,6 +44,18 @@ describe Aws::Record::Marshalers::StringSetMarshaler do
       end
     end
   end
+
+  describe "the remaining RawValue shapes" do
+    marshaler = Aws::Record::Marshalers::StringSetMarshaler.new
+
+    it "stringifies a binary set" do
+      marshaler.type_cast(Set{"a".to_slice}).should eq(Set{"a"})
+    end
+
+    it "stringifies binaries inside a list" do
+      marshaler.type_cast(["a".to_slice] of Aws::DynamoDB::Value).should eq(Set{"a"})
+    end
+  end
 end
 
 # Parity: 8/8 examples from spec/aws-record/record/marshalers/string_set_marshaler_spec.rb (aws-record 2.15.1)

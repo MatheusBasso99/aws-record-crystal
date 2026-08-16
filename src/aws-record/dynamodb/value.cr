@@ -88,8 +88,13 @@ module Aws::DynamoDB::Values
   end
 
   # Converts a set to one of DynamoDB's set types (`SS`, `NS` or `BS`), based on its element type.
+  #
+  # A set that is already one of them is returned unchanged, so that mutating it is visible through
+  # whatever it was assigned to — which is what the record layer's mutation tracking observes.
   def from(value : Set(T)) : Value forall T
-    {% if T <= ::String || T <= ::Symbol %}
+    {% if T <= ::String %}
+      value
+    {% elsif T <= ::Symbol %}
       value.map(&.to_s).to_set
     {% elsif T <= ::BigDecimal %}
       value
@@ -103,10 +108,14 @@ module Aws::DynamoDB::Values
   end
 
   # Converts a hash to a `Aws::DynamoDB::Item` (an `M` attribute). Keys must be strings or symbols.
+  #
+  # A hash that is already an `Item` is returned unchanged, so that mutating it is visible through
+  # whatever it was assigned to — which is what the record layer's mutation tracking observes.
   def from(value : Hash(K, V)) : Value forall K, V
     {% unless K <= ::String || K <= ::Symbol %}
       {% raise "Aws::DynamoDB::Values.from cannot convert a Hash with #{K} keys — DynamoDB map keys are strings" %}
     {% end %}
+    return value if value.is_a?(Item)
     map(value)
   end
 

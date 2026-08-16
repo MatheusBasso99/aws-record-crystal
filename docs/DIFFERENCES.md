@@ -29,6 +29,10 @@ Spec files that assert a divergent behavior carry a comment pointing at the rele
   reads like Ruby.
 - **Numeric sets are always `Set(BigDecimal)`, and collections are homogeneous.** A Crystal `Set` cannot
   hold mixed types, so the Ruby examples that type cast `Set.new([1, '2', 3])` pass a list here instead.
+- **Assigning a collection that is not already a `Value` converts it, and so copies it.** Assigning an
+  `Array(Aws::DynamoDB::Value)` or an `Aws::DynamoDB::Item` stores that very object, so mutating it
+  afterwards is visible to the item — which is what mutation tracking observes, and what the Ruby gem
+  does for every collection.
 - **A default value given as a block is wrapped with `Aws::Record::Attribute.default_proc`.** Crystal infers
   a proc literal's type from its body, so `->{ 2 + 3 }` is a `Proc(Int32)` and would not fit; `default_proc`
   widens the result to `RawValue`.
@@ -77,5 +81,13 @@ Spec files that assert a divergent behavior carry a comment pointing at the rele
   and less clearly.
 
 ## Spec techniques
+
+- **RSpec mocks are replaced by the stub client.** `spec/aws-record/record/dirty_tracking_spec.cr`
+  stubs `get_item` where the Ruby spec stubs `.find`, and the Ruby examples that assert an
+  `ArgumentError` for an unknown attribute assert a compile error here instead. Each such example keeps
+  the Ruby description and says so in a comment.
+- **ActiveModel is not available.** The Ruby specs that mix in `ActiveModel::Validations` or
+  `ActiveModel::Model` are ported against a model that overrides `#valid?`, which is the hook this
+  shard documents.
 
 ## Not implemented (out of scope)

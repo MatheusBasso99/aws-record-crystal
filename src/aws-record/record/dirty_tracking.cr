@@ -57,7 +57,17 @@ class Aws::Record::Base
   end
 
   # Restores the named attributes — every changed one by default — to their clean values.
-  def rollback!(names : Enumerable(String | Symbol)? = nil) : Nil
-    (names || dirty).each { |name| rollback_attribute!(name) }
+  #
+  # ```
+  # item.rollback!(:body)
+  # item.rollback!
+  # ```
+  def rollback!(*names : String | Symbol) : Nil
+    names.each { |name| rollback_attribute!(name) }
+  end
+
+  # :ditto:
+  def rollback! : Nil
+    dirty.each { |name| rollback_attribute!(name) }
   end
 end

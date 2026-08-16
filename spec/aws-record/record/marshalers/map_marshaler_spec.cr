@@ -47,6 +47,20 @@ describe Aws::Record::Marshalers::MapMarshaler do
       end
     end
   end
+
+  describe "pairs that are not pairs" do
+    marshaler = Aws::Record::Marshalers::MapMarshaler.new
+
+    it "raises when a list element is not a two element pair" do
+      pairs = [["a", 1_i64, 2_i64] of Aws::DynamoDB::Value] of Aws::DynamoDB::Value
+      expect_raises(ArgumentError, "into a hash!") { marshaler.type_cast(pairs) }
+    end
+
+    it "stringifies a pair key that is not a string" do
+      pairs = [[1_i64, "one"] of Aws::DynamoDB::Value] of Aws::DynamoDB::Value
+      marshaler.type_cast(pairs).should eq(Aws::DynamoDB::Item{"1" => "one"})
+    end
+  end
 end
 
 # Parity: 7/7 examples from spec/aws-record/record/marshalers/map_marshaler_spec.rb (aws-record 2.15.1)

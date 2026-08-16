@@ -45,6 +45,19 @@ describe Aws::Record::Marshalers::IntegerMarshaler do
       end
     end
   end
+
+  describe "the remaining RawValue shapes" do
+    marshaler = Aws::Record::Marshalers::IntegerMarshaler.new
+
+    it "casts binaries through their string form" do
+      marshaler.type_cast("25".to_slice).should eq(25_i64)
+      marshaler.type_cast("nope".to_slice).should eq(0_i64)
+    end
+
+    it "casts booleans the way Ruby's to_s.to_i does" do
+      marshaler.type_cast(false).should eq(0_i64)
+    end
+  end
 end
 
 # Parity: 7/7 examples from spec/aws-record/record/marshalers/integer_marshaler_spec.rb (aws-record 2.15.1)

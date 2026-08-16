@@ -96,6 +96,26 @@ module Aws::DynamoDB::Types::Shape
     def initialize(*, {% for decl in decls %}@{{ decl.var }} : {{ decl.type }} = nil, {% end %})
     end
 
+    # The names of this shape's fields, for callers that filter their options by shape.
+    FIELD_NAMES = [{% for decl in decls %}{{ decl.var.stringify }}, {% end %}] of String
+
+    # Builds a shape from *opts*, ignoring any option this shape does not have.
+    #
+    # `#merge` and the keyword `initialize` both reject an unknown option; this is for the record
+    # layer, which forwards one set of options to whichever operation it ends up performing. The
+    # selection happens at compile time, so each field keeps its own type.
+    def self.from_options(**opts : **O) : self forall O
+      \{% begin %}
+        new(
+          {% for decl in decls %}
+            \{% if O.keys.map(&.id.stringify).includes?({{ decl.var.stringify }}) %}
+              {{ decl.var }}: opts[{{ decl.var.symbolize }}],
+            \{% end %}
+          {% end %}
+        )
+      \{% end %}
+    end
+
     # The fields of this shape as a named tuple, in declaration order.
     def to_named_tuple
       { {% for decl in decls %}{{ decl.var }}: @{{ decl.var }}, {% end %} }

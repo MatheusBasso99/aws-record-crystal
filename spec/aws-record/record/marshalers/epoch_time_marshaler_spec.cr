@@ -62,6 +62,14 @@ describe Aws::Record::Marshalers::EpochTimeMarshaler do
       cast.utc?.should be_false
     end
   end
+
+  describe "the remaining RawValue shapes" do
+    marshaler = Aws::Record::Marshalers::EpochTimeMarshaler.new
+
+    it "raises for a value that is not a time at all" do
+      expect_raises(ArgumentError, "expected a Time value or nil") { marshaler.type_cast(true) }
+    end
+  end
 end
 
 # Parity: 11/11 examples from spec/aws-record/record/marshalers/epoch_time_marshaler_spec.rb (aws-record 2.15.1)

@@ -48,6 +48,18 @@ describe Aws::Record::Marshalers::DateMarshaler do
       marshaler.serialize("2016-07-21").should eq("H28.07.21")
     end
   end
+
+  describe "the remaining RawValue shapes" do
+    marshaler = Aws::Record::Marshalers::DateMarshaler.new
+
+    it "casts any number as a date at epoch seconds" do
+      marshaler.type_cast(BigDecimal.new(1_531_173_732)).should eq(Time.utc(2018, 7, 9))
+    end
+
+    it "raises for a value that is not a date at all" do
+      expect_raises(ArgumentError, "expected a Date value or nil") { marshaler.type_cast(true) }
+    end
+  end
 end
 
 # Parity: 7/7 examples from spec/aws-record/record/marshalers/date_marshaler_spec.rb (aws-record 2.15.1)

@@ -42,6 +42,24 @@ describe Aws::Record::Marshalers::FloatMarshaler do
       end
     end
   end
+
+  describe "the remaining RawValue shapes" do
+    marshaler = Aws::Record::Marshalers::FloatMarshaler.new
+
+    it "casts binaries through their string form" do
+      marshaler.type_cast("2.5".to_slice).should eq(2.5)
+      marshaler.type_cast("nope".to_slice).should eq(0.0)
+    end
+
+    it "casts a time to its epoch seconds" do
+      marshaler.type_cast(Time.unix(1_531_173_732)).should eq(1_531_173_732.0)
+    end
+
+    it "casts booleans the way Ruby's to_s.to_f does" do
+      marshaler.type_cast(true).should eq(1.0)
+      marshaler.type_cast(false).should eq(0.0)
+    end
+  end
 end
 
 # Parity: 7/7 examples from spec/aws-record/record/marshalers/float_marshaler_spec.rb (aws-record 2.15.1)

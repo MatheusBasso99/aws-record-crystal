@@ -179,8 +179,8 @@ abstract class Aws::Record::Base
   end
 
   # Sets a custom DynamoDB table name for this model.
-  def self.set_table_name(name : String) : Nil
-    @@table_name = name
+  def self.set_table_name(name : String | Symbol) : Nil
+    @@table_name = name.to_s
   end
 
   # The DynamoDB table name of this model; by default its class name, with `::` turned into `_`.

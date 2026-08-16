@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (484 examples) hygiene ✅ compat-avram ✅ — phases 0-3 done
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (597 examples) hygiene ✅ compat-avram ✅ coverage 98.3 % — phases 0-4 done
 
 ## Phase 0 — Bootstrap
 
@@ -58,10 +58,10 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (484 examples) hygien
 - [x] compile-error fixtures (`spec/fixtures/compile_errors/*.cr`, 11 of them) + runner helper
 - [x] `scripts/compat_avram.sh` green with the full `compat/avram_app/src/app.cr` (Avram 1.5.0)
 
-## Phase 4 — Item operations + dirty tracking (parity 0/89)
+## Phase 4 — Item operations + dirty tracking (parity 87/89)
 
-- [ ] `dirty_tracking.cr` (0/52)
-- [ ] `item_operations.cr` (0/37)
+- [x] `dirty_tracking.cr` (52/52)
+- [x] `item_operations.cr` (35/37; `#find_all` and `#transact_find` need Phase 7)
 
 ## Phase 5 — Query/scan, ItemCollection, BuildableSearch (parity 0/25)
 
@@ -108,9 +108,9 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (484 examples) hygien
 | record/attributes_spec.rb | 27 | 27 | 9 are compile-error fixtures |
 | record/batch_spec.rb | 14 | 0 | |
 | record/client_configuration_spec.rb | 2 | 2 | + 3 extras |
-| record/dirty_tracking_spec.rb | 52 | 0 | |
+| record/dirty_tracking_spec.rb | 52 | 52 | |
 | record/item_collection_spec.rb | 18 | 0 | |
-| record/item_operations_spec.rb | 37 | 0 | |
+| record/item_operations_spec.rb | 37 | 35 | 2 pending until Phase 7 |
 | record/marshalers/boolean_marshaler_spec.rb | 5 | 5 | |
 | record/marshalers/date_marshaler_spec.rb | 7 | 7 | |
 | record/marshalers/date_time_marshaler_spec.rb | 10 | 10 | |
@@ -128,7 +128,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (484 examples) hygien
 | record/table_config_spec.rb | 47 | 0 | |
 | record/table_migration_spec.rb | 21 | 0 | |
 | record/transactions_spec.rb | 12 | 0 | |
-| **total** | **372** | **153** | |
+| **total** | **372** | **240** | |
 
 ## Coverage history
 
@@ -136,6 +136,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (484 examples) hygien
 | --- | --- | --- | --- |
 | 0 | n/a | n/a | `src/` is only the version constant |
 | 1 | 98.07 | 88.24 % `dynamodb/types/common.cr` | gate 85 %, target 90 % |
+| 4 | 98.32 | 88.24 % `dynamodb/types/common.cr` | no record file below 80 % |
 
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 

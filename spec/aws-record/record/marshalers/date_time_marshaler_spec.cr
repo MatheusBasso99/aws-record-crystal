@@ -66,6 +66,18 @@ describe Aws::Record::Marshalers::DateTimeMarshaler do
       marshaler.serialize("2016-07-20T16:34:36-07:00").should eq("H28.07.20T23:34:36+00:00")
     end
   end
+
+  describe "the remaining RawValue shapes" do
+    marshaler = Aws::Record::Marshalers::DateTimeMarshaler.new
+
+    it "casts any number as epoch seconds" do
+      marshaler.type_cast(BigDecimal.new(1_531_173_732)).should eq(Time.unix(1_531_173_732))
+    end
+
+    it "raises for a value that is not a time at all" do
+      expect_raises(ArgumentError, "expected a DateTime value or nil") { marshaler.type_cast(true) }
+    end
+  end
 end
 
 # Parity: 10/10 examples from spec/aws-record/record/marshalers/date_time_marshaler_spec.rb (aws-record 2.15.1)
