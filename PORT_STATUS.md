@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (246 examples) hygiene ✅ integration ✅ (phase 1 done)
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (403 examples) hygiene ✅ coverage 98.1 % (phase 1) — phases 0-2 done
 
 ## Phase 0 — Bootstrap
 
@@ -27,24 +27,24 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (246 examples) hygien
 - [x] `spec/aws-record/dynamodb/client_spec.cr` — webmock, exact wire JSON per operation — 33 examples
 - [x] DynamoDB Local smoke test (`spec/integration/smoke_spec.cr`, green via `scripts/integration.sh`)
 
-## Phase 2 — Marshalers + Attribute + time parsing (parity 0/106)
+## Phase 2 — Marshalers + Attribute + time parsing (parity 106/106)
 
-- [ ] `time_parsing.cr` (new; lenient parse cascade)
-- [ ] `marshalers/marshaler.cr` (new abstract base)
-- [ ] string_marshaler (0/9)
-- [ ] boolean_marshaler (0/5)
-- [ ] integer_marshaler (0/7)
-- [ ] float_marshaler (0/7)
-- [ ] date_marshaler (0/7)
-- [ ] date_time_marshaler (0/10)
-- [ ] time_marshaler (0/11)
-- [ ] epoch_time_marshaler (0/11)
-- [ ] list_marshaler (0/7)
-- [ ] map_marshaler (0/7)
-- [ ] string_set_marshaler (0/8)
-- [ ] numeric_set_marshaler (0/8)
-- [ ] `attribute.cr` + `DefaultMarshaler` (0/9)
-- [ ] `spec/aws-record/wire_compat_spec.cr` (§4.6 table, every row)
+- [x] `time_parsing.cr` (new; lenient parse cascade) — 14 examples
+- [x] `marshalers/marshaler.cr` (new abstract base) + `raw_value.cr`
+- [x] string_marshaler (9/9)
+- [x] boolean_marshaler (5/5)
+- [x] integer_marshaler (7/7)
+- [x] float_marshaler (7/7)
+- [x] date_marshaler (7/7)
+- [x] date_time_marshaler (10/10)
+- [x] time_marshaler (11/11, plus 1 extra)
+- [x] epoch_time_marshaler (11/11)
+- [x] list_marshaler (7/7)
+- [x] map_marshaler (7/7)
+- [x] string_set_marshaler (8/8)
+- [x] numeric_set_marshaler (8/8)
+- [x] `attribute.cr` + `DefaultMarshaler` (9/9, plus 8 extras)
+- [x] `spec/aws-record/wire_compat_spec.cr` (§4.6 table, every row) — 18 examples
 
 ## Phase 3 — Model core (parity 0/47)
 
@@ -104,37 +104,38 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (246 examples) hygien
 | Ruby spec file | examples | ported | notes |
 | --- | ---: | ---: | --- |
 | record_spec.rb | 18 | 0 | |
-| record/attribute_spec.rb | 9 | 0 | |
+| record/attribute_spec.rb | 9 | 9 | + 8 extras |
 | record/attributes_spec.rb | 27 | 0 | |
 | record/batch_spec.rb | 14 | 0 | |
 | record/client_configuration_spec.rb | 2 | 0 | |
 | record/dirty_tracking_spec.rb | 52 | 0 | |
 | record/item_collection_spec.rb | 18 | 0 | |
 | record/item_operations_spec.rb | 37 | 0 | |
-| record/marshalers/boolean_marshaler_spec.rb | 5 | 0 | |
-| record/marshalers/date_marshaler_spec.rb | 7 | 0 | |
-| record/marshalers/date_time_marshaler_spec.rb | 10 | 0 | |
-| record/marshalers/epoch_time_marshaler_spec.rb | 11 | 0 | |
-| record/marshalers/float_marshaler_spec.rb | 7 | 0 | |
-| record/marshalers/integer_marshaler_spec.rb | 7 | 0 | |
-| record/marshalers/list_marshaler_spec.rb | 7 | 0 | |
-| record/marshalers/map_marshaler_spec.rb | 7 | 0 | |
-| record/marshalers/numeric_set_marshaler_spec.rb | 8 | 0 | |
-| record/marshalers/string_marshaler_spec.rb | 9 | 0 | |
-| record/marshalers/string_set_marshaler_spec.rb | 8 | 0 | |
-| record/marshalers/time_marshaler_spec.rb | 11 | 0 | |
+| record/marshalers/boolean_marshaler_spec.rb | 5 | 5 | |
+| record/marshalers/date_marshaler_spec.rb | 7 | 7 | |
+| record/marshalers/date_time_marshaler_spec.rb | 10 | 10 | |
+| record/marshalers/epoch_time_marshaler_spec.rb | 11 | 11 | |
+| record/marshalers/float_marshaler_spec.rb | 7 | 7 | |
+| record/marshalers/integer_marshaler_spec.rb | 7 | 7 | |
+| record/marshalers/list_marshaler_spec.rb | 7 | 7 | |
+| record/marshalers/map_marshaler_spec.rb | 7 | 7 | |
+| record/marshalers/numeric_set_marshaler_spec.rb | 8 | 8 | |
+| record/marshalers/string_marshaler_spec.rb | 9 | 9 | |
+| record/marshalers/string_set_marshaler_spec.rb | 8 | 8 | |
+| record/marshalers/time_marshaler_spec.rb | 11 | 11 | + 1 extra |
 | record/query_spec.rb | 7 | 0 | |
 | record/secondary_indexes_spec.rb | 11 | 0 | |
 | record/table_config_spec.rb | 47 | 0 | |
 | record/table_migration_spec.rb | 21 | 0 | |
 | record/transactions_spec.rb | 12 | 0 | |
-| **total** | **372** | **0** | |
+| **total** | **372** | **106** | |
 
 ## Coverage history
 
 | phase | total % | lowest file | note |
 | --- | --- | --- | --- |
 | 0 | n/a | n/a | `src/` is only the version constant |
+| 1 | 98.07 | 88.24 % `dynamodb/types/common.cr` | gate 85 %, target 90 % |
 
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 
@@ -170,4 +171,8 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (246 examples) hygien
 - 2026-08-16 — Phase 1 complete: `Aws::DynamoDB` client (Value/AttributeValue, Errors, Config/Credentials,
   17 typed operations, SigV4 transport with a pooled connection, retries with full jitter, paginator,
   waiters, response stubbing) with 246 unit examples plus a DynamoDB Local smoke test.
-  `crystal tool unreachable` is empty. Next: Phase 2 (marshalers + `Attribute` + time parsing).
+  `crystal tool unreachable` is empty. Coverage 98.07 %. Next: Phase 2 (marshalers + `Attribute`).
+- 2026-08-16 — Phase 2 complete: all 12 marshalers, `Attribute`, `RawValue`/`RawValues` and
+  `TimeParsing`, with 106/106 ported examples plus the wire compatibility table. Every date/time wire
+  format was checked against system Ruby and matches byte for byte, as does `String#succ`.
+  403 unit examples, `crystal tool unreachable` empty. Next: Phase 3 (model core).

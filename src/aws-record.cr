@@ -4,3 +4,7 @@
 # before use, so the order below is explicit and intentional.
 require "./aws-record/version"
 require "./aws-record/dynamodb"
+require "./aws-record/record/raw_value"
+require "./aws-record/record/time_parsing"
+require "./aws-record/record/marshalers"
+require "./aws-record/record/attribute"
