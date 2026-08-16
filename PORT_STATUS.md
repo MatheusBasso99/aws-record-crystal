@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (597 examples) hygiene ✅ compat-avram ✅ coverage 98.3 % — phases 0-4 done
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (628 examples) hygiene ✅ compat-avram ✅ coverage 98.3 % — phases 0-5 done
 
 ## Phase 0 — Bootstrap
 
@@ -63,11 +63,11 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (597 examples) hygien
 - [x] `dirty_tracking.cr` (52/52)
 - [x] `item_operations.cr` (35/37; `#find_all` and `#transact_find` need Phase 7)
 
-## Phase 5 — Query/scan, ItemCollection, BuildableSearch (parity 0/25)
+## Phase 5 — Query/scan, ItemCollection, BuildableSearch (parity 25/25)
 
-- [ ] `item_collection.cr` (0/18)
-- [ ] `buildable_search.cr`
-- [ ] `query.cr` (0/7)
+- [x] `item_collection.cr` (18/18)
+- [x] `buildable_search.cr` (+ 4 extra examples)
+- [x] `query.cr` (7/7)
 
 ## Phase 6 — Secondary indexes, TableMigration, TableConfig (parity 0/79)
 
@@ -109,7 +109,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (597 examples) hygien
 | record/batch_spec.rb | 14 | 0 | |
 | record/client_configuration_spec.rb | 2 | 2 | + 3 extras |
 | record/dirty_tracking_spec.rb | 52 | 52 | |
-| record/item_collection_spec.rb | 18 | 0 | |
+| record/item_collection_spec.rb | 18 | 18 | |
 | record/item_operations_spec.rb | 37 | 35 | 2 pending until Phase 7 |
 | record/marshalers/boolean_marshaler_spec.rb | 5 | 5 | |
 | record/marshalers/date_marshaler_spec.rb | 7 | 7 | |
@@ -123,12 +123,12 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (597 examples) hygien
 | record/marshalers/string_marshaler_spec.rb | 9 | 9 | |
 | record/marshalers/string_set_marshaler_spec.rb | 8 | 8 | |
 | record/marshalers/time_marshaler_spec.rb | 11 | 11 | + 1 extra |
-| record/query_spec.rb | 7 | 0 | |
+| record/query_spec.rb | 7 | 7 | + 4 extras |
 | record/secondary_indexes_spec.rb | 11 | 0 | |
 | record/table_config_spec.rb | 47 | 0 | |
 | record/table_migration_spec.rb | 21 | 0 | |
 | record/transactions_spec.rb | 12 | 0 | |
-| **total** | **372** | **240** | |
+| **total** | **372** | **265** | |
 
 ## Coverage history
 
@@ -142,6 +142,13 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (597 examples) hygien
 
 - `class MyModel < Aws::Record::Base` replaces `include Aws::Record` (Crystal module metaclasses are not
   supertypes of including classes' metaclasses).
+
+## Reviewed `crystal tool unreachable` exceptions
+
+- `Aws::Record::Base.explicit_table_name?` and `Aws::Record::ClientConfiguration#explicit_dynamodb_client?`
+  are the defaults every model overrides in `macro finished`; they exist so that the methods are on the
+  `Base.class` virtual method table.
+- `Aws::Record::Base.model_valid?` is called by `TableMigration`, which lands in Phase 6.
 
 ## Known limitations / follow-ups
 

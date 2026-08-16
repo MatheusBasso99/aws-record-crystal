@@ -29,6 +29,21 @@ module Aws::DynamoDB::ItemListConverter
   end
 end
 
+# Converts a list of DynamoDB attribute values, as the legacy condition parameters use.
+module Aws::DynamoDB::ValueListConverter
+  # Reads `[{"N": "1"}]` into an `Array(Aws::DynamoDB::Value)`.
+  def self.from_json(pull : JSON::PullParser) : Array(Value)
+    values = [] of Value
+    pull.read_array { values << AttributeValue.from_wire(JSON::Any.new(pull)) }
+    values
+  end
+
+  # Writes an `Array(Aws::DynamoDB::Value)` as `[{"N": "1"}]`.
+  def self.to_json(value : Array(Value), builder : JSON::Builder) : Nil
+    builder.array { value.each { |element| AttributeValue.to_wire(element).to_json(builder) } }
+  end
+end
+
 # Converts a table name to items map, as used by `BatchGetItem` responses.
 module Aws::DynamoDB::ItemListMapConverter
   # Reads `{"Table": [{"id": {"N": "1"}}]}`.
@@ -78,6 +93,7 @@ module Aws::DynamoDB::Types::Shape
     {%
       converters = {
         "Item"                      => "Aws::DynamoDB::ItemConverter",
+        "Array(Value)"              => "Aws::DynamoDB::ValueListConverter",
         "Array(Item)"               => "Aws::DynamoDB::ItemListConverter",
         "Hash(String, Array(Item))" => "Aws::DynamoDB::ItemListMapConverter",
       }

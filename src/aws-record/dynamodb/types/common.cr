@@ -77,6 +77,16 @@ module Aws::DynamoDB::Types
     )
   end
 
+  # A comparison used by the legacy `key_conditions`, `query_filter` and `scan_filter` parameters.
+  struct Condition
+    include Shape
+
+    fields(
+      attribute_value_list : Array(Value)?,
+      comparison_operator : String?,
+    )
+  end
+
   # How a table is billed, as described by the service.
   struct BillingModeSummary
     include Shape

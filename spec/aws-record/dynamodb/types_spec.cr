@@ -131,6 +131,31 @@ describe Aws::DynamoDB::Types do
     end
   end
 
+  describe "the legacy condition parameters" do
+    it "builds a Query input with key conditions" do
+      input = Aws::DynamoDB::Types::QueryInput.new(
+        table_name: "T",
+        key_conditions: {
+          "id" => Aws::DynamoDB::Types::Condition.new(
+            attribute_value_list: [1_i64] of Aws::DynamoDB::Value, comparison_operator: "EQ"
+          ),
+        }
+      )
+      input.to_wire.to_json.should eq(
+        %({"TableName":"T","KeyConditions":{"id":{"AttributeValueList":[{"N":"1"}],) +
+        %("ComparisonOperator":"EQ"}}})
+      )
+    end
+
+    it "parses a condition back from the wire" do
+      condition = Aws::DynamoDB::Types::Condition.from_json(
+        %({"AttributeValueList":[{"N":"1"},{"S":"x"}],"ComparisonOperator":"BETWEEN"})
+      )
+      condition.attribute_value_list.should eq([1_i64, "x"] of Aws::DynamoDB::Value)
+      condition.comparison_operator.should eq("BETWEEN")
+    end
+  end
+
   describe "batch operations" do
     it "builds a BatchGetItem input" do
       input = Aws::DynamoDB::Types::BatchGetItemInput.new(
