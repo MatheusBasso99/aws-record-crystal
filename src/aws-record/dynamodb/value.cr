@@ -1,4 +1,5 @@
 require "big"
+require "log"
 require "set"
 
 # A minimal, typed client for the Amazon DynamoDB JSON (1.0) API.
@@ -8,6 +9,9 @@ require "set"
 # mirror the Ruby SDK (`Aws::DynamoDB::Client`, `Aws::DynamoDB::Errors::ResourceNotFoundException`, …)
 # so that code and specs ported from the Ruby gem read the same.
 module Aws::DynamoDB
+  # Log source for everything the DynamoDB client does. Plug a backend into `"aws.dynamodb"` to see it.
+  Log = ::Log.for("aws.dynamodb")
+
   # A DynamoDB attribute value in its "simple" (unmarshalled) Crystal form.
   #
   # `Aws::DynamoDB::AttributeValue` converts between this and the wire form

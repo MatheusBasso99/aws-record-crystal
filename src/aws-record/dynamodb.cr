@@ -2,3 +2,5 @@
 require "./dynamodb/value"
 require "./dynamodb/attribute_value"
 require "./dynamodb/errors"
+require "./dynamodb/credentials"
+require "./dynamodb/config"
