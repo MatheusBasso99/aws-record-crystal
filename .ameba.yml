@@ -25,6 +25,7 @@ Documentation/Documentation:
   IgnoreMacroHooks: true
   Excluded:
     - spec/**/*
+    - examples/**/*
     - compat/**/*
 
 Typing/MethodReturnTypeRestriction:
@@ -34,6 +35,7 @@ Typing/MethodReturnTypeRestriction:
   NodocMethods: false
   Excluded:
     - spec/**/*
+    - examples/**/*
     - compat/**/*
 
 Typing/MethodParameterTypeRestriction:
@@ -45,6 +47,7 @@ Typing/MethodParameterTypeRestriction:
   NodocMethods: false
   Excluded:
     - spec/**/*
+    - examples/**/*
     - compat/**/*
 
 Style/PercentLiteralDelimiters:

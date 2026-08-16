@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 unit + 45 integration examples) hygiene ✅ compat-avram ✅ coverage 98.0 % — **unit parity 372/372, integration parity 45/45**
+Updated: 2026-08-16 — **PORT COMPLETE**. Gates: format ✅ ameba ✅ specs ✅ (736 unit + 45 integration examples) hygiene ✅ compat-avram ✅ docs ✅ coverage 98.0 % — **unit parity 372/372, integration parity 45/45**
 
 ## Phase 0 — Bootstrap
 
@@ -97,11 +97,13 @@ against DynamoDB Local in 0.4 s.
 
 ## Phase 9 — Docs, README, CHANGELOG, release hygiene
 
-- [ ] README ported (usage, differences, Lucky/Avram, development) + compiling examples
-- [ ] Doc comments complete; `crystal docs` clean
-- [ ] CHANGELOG 0.1.0 entry
-- [ ] `crystal tool unreachable` reviewed; `crystal tool macro_code_coverage` run once
-- [ ] Final summary
+- [x] README ported (usage, item operations, batch, transactions, inheritance, differences,
+      Lucky/Avram, development). Every sample lives in `examples/` and is type-checked by
+      `scripts/check.sh` (`crystal build --no-codegen examples/all_examples.cr`)
+- [x] Doc comments complete (ameba's `Documentation` rule is on for `src/`); `crystal docs` clean
+- [x] CHANGELOG 0.1.0 entry, with the intentional differences listed
+- [x] `crystal tool unreachable` reviewed; `crystal tool macro_code_coverage` run once (see below)
+- [x] Final summary
 
 ## Parity table (unit)
 
@@ -145,10 +147,46 @@ against DynamoDB Local in 0.4 s.
 | 7 | 97.96 | — | no record file below 80 % |
 | 8 | 97.96 | 83.33 % `record/secondary_indexes.cr` | unit suite only; integration specs are tagged out |
 
+## Parity table (integration)
+
+| Cucumber feature | scenarios | ported | Crystal spec |
+| --- | ---: | ---: | --- |
+| migrations/tables.feature | 4 | 4 | `spec/integration/tables_spec.cr` |
+| migrations/on_demand_tables.feature | 1 | 1 | `spec/integration/on_demand_tables_spec.cr` |
+| items/items.feature | 5 | 5 | `spec/integration/items_spec.cr` |
+| items/item_updates.feature | 5 | 5 | `spec/integration/item_updates_spec.cr` |
+| items/item_default_values.feature | 1 | 1 | `spec/integration/item_default_values_spec.cr` |
+| indexes/secondary_indexes.feature | 2 | 2 | `spec/integration/secondary_indexes_spec.cr` |
+| searching/search.feature | 6 | 6 | `spec/integration/search_spec.cr` |
+| batch/batch.feature | 1 | 1 | `spec/integration/batch_spec.cr` |
+| transactions/transactions.feature | 7 | 7 | `spec/integration/transactions_spec.cr` |
+| table_config/table_config.feature | 11 | 11 | `spec/integration/table_config_spec.cr` |
+| inheritance/inheritance.feature | 2 | 2 | `spec/integration/inheritance_spec.cr` |
+| **total** | **45** | **45** | audited by scenario name |
+
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 
 - `class MyModel < Aws::Record::Base` replaces `include Aws::Record` (Crystal module metaclasses are not
   supertypes of including classes' metaclasses).
+- Modelling mistakes (duplicate attributes, hash+range on one attribute, storage name collisions,
+  reserved names, unknown attributes in `Model.new`) are compile errors, not runtime errors.
+- Mutation tracking and the table name are inherited by lookup, not snapshotted into the child class.
+- Attribute setters take `value : _` (any value); getters are precisely typed.
+- Attribute names are `String` at run time; public APIs still accept `Symbol`.
+- Numeric sets are `Set(BigDecimal)` and collections are homogeneous.
+- A default value given as a block goes through `Aws::Record::Attribute.default_proc`.
+- Conversions live in `Aws::DynamoDB::Values` (an alias cannot carry class methods).
+- Wire numbers read as `Int64` or `BigDecimal`, never `Float64`; `float_attr` still round-trips `Float64`.
+- `date_attr`/`datetime_attr`/`time_attr`/`epoch_time_attr` all read as `Time?`, with the gem's wire formats.
+- `Aws::Record::TimeParsing.parse` replaces Ruby's lenient parsing; formatters are `Proc(Time, String)`.
+- Pass-through options are typed, so an option the operation does not have is a compile error.
+- `increment_<name>!` and `#assign_attributes` honour `database_attribute_name` (the gem does not).
+- Marshalers cannot raise "expected a X value"; `DefaultMarshaler` refuses to serialize a `Time`.
+- RSpec mocks are replaced by the stub client, and ActiveModel by an overridden `#valid?`.
+- Transactional write items are built by `Transactions.save/.put/.update/.delete/.check`.
+- `Batch.write`/`.read` reuse the client `Batch` is configured with instead of building a new one.
+- `Model.find_all`/`Model.transact_find` take an `Array(Hash(String, Aws::Record::RawValue))`.
+- Credential providers cover static / ENV / shared file only.
 
 ## Reviewed `crystal tool unreachable` exceptions
 
@@ -158,6 +196,17 @@ against DynamoDB Local in 0.4 s.
 - `Aws::Record::Base.model_valid?` is called by `TableMigration`; covered since Phase 6.
 - `Aws::Record::ClientConfiguration#explicit_dynamodb_client?` and `#dynamodb_client` are covered since
   Phase 7, through `Aws::Record::Batch` and a spec that extends the module directly.
+
+## `crystal tool macro_code_coverage` (run once, at the end of Phase 9)
+
+242 macro lines across 6 files are executed while compiling the spec suite. The only branches never
+taken are, by construction:
+
+- the compile-time `raise` guards in `base.cr`, `secondary_indexes.cr`, `shape.cr` and `value.cr` —
+  they are exercised out of process by the 18 fixtures under `spec/fixtures/compile_errors/`, which
+  the tool cannot see because each is compiled by a separate `crystal build --no-codegen`;
+- the mutually exclusive arms of the index generators (`{% if index[:hash_key] %} … {% else %}`) and of
+  the shape field generator (`converter` present or not) — one arm per generated definition.
 
 ## Known limitations / follow-ups
 
@@ -215,4 +264,10 @@ against DynamoDB Local in 0.4 s.
   `spec/integration`, green against DynamoDB Local (tables, on-demand tables, items, item updates,
   default values, secondary indexes, search, batch, transactions, table config, inheritance). Scenario
   names audited 45/45. Next: Phase 9 (README, CHANGELOG, docs, final summary).
+- 2026-08-16 — Phase 9 complete: README ported in full (usage, item operations, batch, transactions,
+  inheritance, differences, Lucky/Avram, development), with every sample compiled from `examples/` by
+  `scripts/check.sh`; CHANGELOG 0.1.0 written; `crystal tool macro_code_coverage` run and summarised.
+  **PORT COMPLETE — 2026-08-16, coverage 97.96 %, 736 unit examples (372/372 gem parity) + 45/45
+  integration scenarios.** Remaining human decision: confirm the Apache-2.0 relicensing before
+  publishing or tagging.
 
