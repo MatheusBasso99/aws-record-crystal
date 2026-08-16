@@ -49,6 +49,10 @@ private def new_item(id : Int32 = 1, date : String = "2015-12-14") : ItemOperati
   item
 end
 
+private def key_hash(**values) : Hash(String, Aws::Record::RawValue)
+  Aws::Record::Base.raw_value_hash(values)
+end
+
 private def safe_put_json(item_json : String) : JSON::Any
   JSON.parse(
     %({"TableName":"TestTable","Item":#{item_json},) +
@@ -331,7 +335,35 @@ describe "ItemOperations" do
   end
 
   describe "#find_all" do
-    pending "passes the correct client, class and key arguments to BatchRead"
+    it "passes the correct client, class and key arguments to BatchRead" do
+      # Rewritten without mocks: the Ruby spec stubs `Batch.read`, this asserts the request it makes.
+      client = configured
+      client.stub_responses(
+        :batch_get_item,
+        Aws::DynamoDB::Types::BatchGetItemOutput.new(
+          responses: {"TestTable" => [Aws::DynamoDB::Item{"id" => 1_i64, "MyDate" => "2022-12-24"}]}
+        )
+      )
+
+      keys = [
+        key_hash(id: 1, date: "2022-12-24"),
+        key_hash(id: 2, date: "2022-12-25"),
+        key_hash(id: 3, date: "2022-12-26"),
+      ]
+      result = ItemOperationsSpec::TestModel.find_all(keys)
+
+      result.should be_a(Aws::Record::BatchRead)
+      api_requests(client)[0].params.should eq(
+        JSON.parse(
+          %({"RequestItems":{"TestTable":{"Keys":[) +
+          %({"id":{"N":"1"},"MyDate":{"S":"2022-12-24"}},) +
+          %({"id":{"N":"2"},"MyDate":{"S":"2022-12-25"}},) +
+          %({"id":{"N":"3"},"MyDate":{"S":"2022-12-26"}}]}}})
+        )
+      )
+      result.items.size.should eq(1)
+      result.items[0].should be_a(ItemOperationsSpec::TestModel)
+    end
   end
 
   describe ".update" do
@@ -585,7 +617,47 @@ describe "ItemOperations" do
 
   describe "Transactional APIs" do
     describe "#transact_find" do
-      pending "can directly call #transact_find"
+      it "can directly call #transact_find" do
+        client = configured
+        client.stub_responses(:transact_get_items, Aws::DynamoDB::Types::TransactGetItemsOutput.new(
+          responses: [
+            Aws::DynamoDB::Types::ItemResponse.new(
+              item: Aws::DynamoDB::Item{"id" => 1_i64, "MyDate" => "2015-12-14", "body" => "One"}
+            ),
+            Aws::DynamoDB::Types::ItemResponse.new,
+            Aws::DynamoDB::Types::ItemResponse.new(
+              item: Aws::DynamoDB::Item{"id" => 2_i64, "MyDate" => "2018-11-29", "body" => "Three"}
+            ),
+          ]
+        ))
+
+        keys = [
+          key_hash(id: 1, date: "2015-12-14"),
+          key_hash(id: 7, date: "2019-07-14"),
+          key_hash(id: 2, date: "2018-11-29"),
+        ]
+        items = ItemOperationsSpec::TestModel.transact_find(keys)
+
+        api_requests(client).size.should eq(1)
+        api_requests(client)[0].params["TransactItems"].should eq(
+          JSON.parse(
+            %([{"Get":{"TableName":"TestTable","Key":{"id":{"N":"1"},"MyDate":{"S":"2015-12-14"}}}},) +
+            %({"Get":{"TableName":"TestTable","Key":{"id":{"N":"7"},"MyDate":{"S":"2019-07-14"}}}},) +
+            %({"Get":{"TableName":"TestTable","Key":{"id":{"N":"2"},"MyDate":{"S":"2018-11-29"}}}}])
+          )
+        )
+
+        items.responses.size.should eq(3)
+        items.responses[1].should be_nil
+        items.responses[0].should be_a(ItemOperationsSpec::TestModel)
+        items.responses[2].should be_a(ItemOperationsSpec::TestModel)
+        items.responses[0].as(ItemOperationsSpec::TestModel).body.should eq("One")
+        items.responses[2].as(ItemOperationsSpec::TestModel).body.should eq("Three")
+        items.missing_items.size.should eq(1)
+        items.missing_items[0].model_class.should eq(ItemOperationsSpec::TestModel)
+        items.missing_items[0].key
+          .should eq(Aws::DynamoDB::Item{"id" => 7_i64, "MyDate" => "2019-07-14"})
+      end
     end
   end
 
@@ -607,5 +679,5 @@ describe "ItemOperations" do
   end
 end
 
-# Parity: 35/37 examples from spec/aws-record/record/item_operations_spec.rb (aws-record 2.15.1).
-# `#find_all` and `#transact_find` need `Batch` and `Transactions`, and land in Phase 7.
+# Parity: 37/37 examples from spec/aws-record/record/item_operations_spec.rb (aws-record 2.15.1),
+# plus extras. `#find_all` and `#transact_find` are rewritten without mocks, against the stub client.

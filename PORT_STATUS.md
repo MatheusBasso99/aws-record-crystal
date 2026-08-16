@@ -1,6 +1,6 @@
 # Port status — aws-record 2.15.1 (c97f732) → aws-record-crystal
 
-Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygiene ✅ compat-avram ✅ coverage 97.8 % — phases 0-6 done
+Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (736 examples) hygiene ✅ compat-avram ✅ coverage 98.0 % — **unit parity complete: 372/372**
 
 ## Phase 0 — Bootstrap
 
@@ -75,10 +75,10 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygien
 - [x] `table_migration.cr` (21/21)
 - [x] `table_config.cr` (47/47)
 
-## Phase 7 — Batch + Transactions (parity 0/26)
+## Phase 7 — Batch + Transactions (parity 26/26)
 
-- [ ] `batch_write.cr`, `batch_read.cr`, `batch.cr` (0/14)
-- [ ] `transactions.cr` (0/12)
+- [x] `batch_write.cr`, `batch_read.cr`, `batch.cr` (14/14)
+- [x] `transactions.cr` (12/12)
 
 ## Phase 8 — Integration specs (DynamoDB Local) (0/45 scenarios)
 
@@ -106,11 +106,11 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygien
 | record_spec.rb | 18 | 18 | |
 | record/attribute_spec.rb | 9 | 9 | + 8 extras |
 | record/attributes_spec.rb | 27 | 27 | 9 are compile-error fixtures |
-| record/batch_spec.rb | 14 | 0 | |
+| record/batch_spec.rb | 14 | 14 | |
 | record/client_configuration_spec.rb | 2 | 2 | + 3 extras |
 | record/dirty_tracking_spec.rb | 52 | 52 | |
 | record/item_collection_spec.rb | 18 | 18 | |
-| record/item_operations_spec.rb | 37 | 35 | 2 pending until Phase 7 |
+| record/item_operations_spec.rb | 37 | 37 | + 2 extras |
 | record/marshalers/boolean_marshaler_spec.rb | 5 | 5 | |
 | record/marshalers/date_marshaler_spec.rb | 7 | 7 | |
 | record/marshalers/date_time_marshaler_spec.rb | 10 | 10 | |
@@ -127,8 +127,8 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygien
 | record/secondary_indexes_spec.rb | 11 | 11 | 5 are compile-error fixtures |
 | record/table_config_spec.rb | 47 | 47 | + 1 extra |
 | record/table_migration_spec.rb | 21 | 21 | 1 is a compile-error fixture |
-| record/transactions_spec.rb | 12 | 0 | |
-| **total** | **372** | **344** | |
+| record/transactions_spec.rb | 12 | 12 | |
+| **total** | **372** | **372** | audited by description string |
 
 ## Coverage history
 
@@ -138,6 +138,7 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygien
 | 1 | 98.07 | 88.24 % `dynamodb/types/common.cr` | gate 85 %, target 90 % |
 | 4 | 98.32 | 88.24 % `dynamodb/types/common.cr` | no record file below 80 % |
 | 6 | 97.76 | 83.33 % `record/secondary_indexes.cr` | no record file below 80 % |
+| 7 | 97.96 | — | no record file below 80 % |
 
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 
@@ -150,6 +151,8 @@ Updated: 2026-08-16. Gates: format ✅ ameba ✅ specs ✅ (710 examples) hygien
   are the defaults every model overrides in `macro finished`; they exist so that the methods are on the
   `Base.class` virtual method table.
 - `Aws::Record::Base.model_valid?` is called by `TableMigration`; covered since Phase 6.
+- `Aws::Record::ClientConfiguration#explicit_dynamodb_client?` and `#dynamodb_client` are covered since
+  Phase 7, through `Aws::Record::Batch` and a spec that extends the module directly.
 
 ## Known limitations / follow-ups
 

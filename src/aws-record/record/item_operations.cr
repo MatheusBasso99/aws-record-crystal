@@ -19,6 +19,40 @@ struct Aws::Record::UpdateExpression
   def initialize(@update_expression : String?, @expression_attribute_names : Hash(String, String)?,
                  @expression_attribute_values : Aws::DynamoDB::Item?) : Nil
   end
+
+  # Folds this expression into *input*, with the caller's pass-through options winning per key.
+  #
+  # Works for any shape that has the three expression fields: `UpdateItemInput` and the transactional
+  # `Update` both do.
+  #
+  # Raises `Aws::Record::Errors::UpdateExpressionCollision` when *input* brought an update expression
+  # of its own, which cannot be combined with one generated from attribute changes.
+  def apply_to(input : T) : T forall T
+    if input.update_expression && @update_expression
+      raise Aws::Record::Errors::UpdateExpressionCollision.new(
+        "Using pass-through update expression with attribute updates is not supported."
+      )
+    end
+    input.merge(
+      update_expression: input.update_expression || @update_expression,
+      expression_attribute_names: merge_names(input.expression_attribute_names),
+      expression_attribute_values: merge_values(input.expression_attribute_values)
+    )
+  end
+
+  private def merge_names(given : Hash(String, String)?) : Hash(String, String)?
+    generated = @expression_attribute_names
+    return given unless generated
+    return generated unless given
+    generated.merge(given)
+  end
+
+  private def merge_values(given : Aws::DynamoDB::Item?) : Aws::DynamoDB::Item?
+    generated = @expression_attribute_values
+    return given unless generated
+    return generated unless given
+    generated.merge(given)
+  end
 end
 
 # Reads and writes of single items.
@@ -119,7 +153,7 @@ class Aws::Record::Base
   end
 
   # :nodoc:
-  protected def build_item_for_save : Aws::DynamoDB::Item
+  def build_item_for_save : Aws::DynamoDB::Item
     validate_key_values
     @data.populate_default_values
     @data.build_save_hash
@@ -139,14 +173,14 @@ class Aws::Record::Base
   # :nodoc:
   #
   # Whether this item should be written as new: its key attributes have changed.
-  protected def expect_new_item? : Bool
+  def expect_new_item? : Bool
     self.class.keys.each_value.any? { |name| @data.attribute_dirty?(name) }
   end
 
   # :nodoc:
   #
   # The condition that keeps a "safe put" from clobbering an existing item.
-  protected def prevent_overwrite_expression : Tuple(String, Hash(String, String))
+  def prevent_overwrite_expression : Tuple(String, Hash(String, String))
     keys = self.class.key_attributes
     conditions = ["attribute_not_exists(#H)"]
     names = {} of String => String
@@ -159,7 +193,7 @@ class Aws::Record::Base
   end
 
   # :nodoc:
-  protected def dirty_changes_for_update : Hash(String, Aws::Record::RawValue)
+  def dirty_changes_for_update : Hash(String, Aws::Record::RawValue)
     changes = Hash(String, Aws::Record::RawValue).new
     dirty.each { |name| changes[name] = @data.raw_value(name) }
     changes
@@ -287,6 +321,43 @@ class Aws::Record::Base
     dynamodb_client.update_item(input.merge(table_name: table_name, key: key))
   end
 
+  # Reads several items of this model in one `BatchGetItem`.
+  #
+  # ```
+  # MyModel.find_all([{"id" => 1_i64, "name" => "n1"}, {"id" => 2_i64, "name" => "n2"}])
+  # ```
+  def self.find_all(keys : Array(Hash(String, Aws::Record::RawValue))) : Aws::Record::BatchRead
+    model = self
+    Aws::Record::Batch.read(client: dynamodb_client) do |batch|
+      keys.each { |key| batch.find(model, key) }
+    end
+  end
+
+  # Builds one item of a transactional read of this model.
+  #
+  # See `Aws::Record::Transactions.transact_find`.
+  def self.tfind_opts(key : NamedTuple, **opts) : Aws::Record::TransactGetItemRequest
+    tfind_opts(**{key: raw_value_hash(key)}.merge(opts))
+  end
+
+  # :ditto:
+  def self.tfind_opts(key : Hash(String, Aws::Record::RawValue), **opts) : Aws::Record::TransactGetItemRequest
+    Aws::Record::TransactGetItemRequest.new(
+      self, Aws::DynamoDB::Types::Get.new(**opts).merge(table_name: table_name, key: serialize_key(key))
+    )
+  end
+
+  # Reads several items of this model in one transaction.
+  #
+  # ```
+  # MyModel.transact_find([{"hk" => "hk1", "rk" => "rk1"}, {"hk" => "hk2", "rk" => "rk2"}])
+  # ```
+  def self.transact_find(transact_items : Array(Hash(String, Aws::Record::RawValue)),
+                         **opts) : Aws::Record::TransactFindResult
+    requests = transact_items.map { |key| tfind_opts(key) }
+    Aws::Record::Transactions.transact_find(**{transact_items: requests, client: dynamodb_client}.merge(opts))
+  end
+
   # Builds a check to run as part of a transactional write, with this model's table and key.
   #
   # ```
@@ -354,16 +425,7 @@ class Aws::Record::Base
   # own, which cannot be combined with the one generated from attribute changes.
   def self.merge_update_expression(input : Aws::DynamoDB::Types::UpdateItemInput,
                                    expression : Aws::Record::UpdateExpression) : Aws::DynamoDB::Types::UpdateItemInput
-    if input.update_expression && expression.update_expression
-      raise Errors::UpdateExpressionCollision.new(
-        "Using pass-through update expression with attribute updates is not supported."
-      )
-    end
-    input.merge(
-      update_expression: input.update_expression || expression.update_expression,
-      expression_attribute_names: merge_hash(expression.expression_attribute_names, input.expression_attribute_names),
-      expression_attribute_values: merge_item(expression.expression_attribute_values, input.expression_attribute_values)
-    )
+    expression.apply_to(input)
   end
 
   # :nodoc:
@@ -383,17 +445,5 @@ class Aws::Record::Base
       request_key[attribute.database_name] = attribute.serialize(key[name]) if attribute
     end
     request_key
-  end
-
-  private def self.merge_hash(generated : Hash(String, String)?, given : Hash(String, String)?) : Hash(String, String)?
-    return given unless generated
-    return generated unless given
-    generated.merge(given)
-  end
-
-  private def self.merge_item(generated : Aws::DynamoDB::Item?, given : Aws::DynamoDB::Item?) : Aws::DynamoDB::Item?
-    return given unless generated
-    return generated unless given
-    generated.merge(given)
   end
 end

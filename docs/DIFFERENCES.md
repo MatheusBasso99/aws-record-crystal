@@ -90,4 +90,17 @@ Spec files that assert a divergent behavior carry a comment pointing at the rele
   `ActiveModel::Model` are ported against a model that overrides `#valid?`, which is the hook this
   shard documents.
 
+## Batch and transactions
+
+- **A transactional write item is built by `Aws::Record::Transactions.save/.put/.update/.delete/.check`**
+  rather than by a hash keyed on the operation (`{save: record}`). Each builder takes the record and
+  that operation's options, so an option the operation does not have is a compile error.
+- **`Aws::Record::Batch.write`/`.read` fall back to the client `Batch` itself is configured with.**
+  The Ruby gem builds a brand new client for every call that does not name one.
+- **`Model.find_all` and `Model.transact_find` take an `Array(Hash(String, Aws::Record::RawValue))`.**
+  Crystal cannot hold named tuples of differing shapes in one array.
+
 ## Not implemented (out of scope)
+
+- **Credential providers** are limited to explicit, environment and shared-file. IMDS, ECS, SSO and
+  `AssumeRole` are not implemented; build an `Aws::DynamoDB::Credentials` yourself and pass it in.
