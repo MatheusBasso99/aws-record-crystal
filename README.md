@@ -348,6 +348,7 @@ scripts/check.sh --fast # same without docs/examples/unreachable
 scripts/coverage.sh     # kcov coverage in Docker (gate: >= 85 %, target 90 %)
 scripts/integration.sh  # the 45 integration specs against DynamoDB Local
 scripts/compat_avram.sh # type-check alongside Avram/Lucky
+scripts/parity.py       # audit spec parity against ../aws-record-ruby (run by check.sh when present)
 ```
 
 The gates are: `crystal tool format --check`, `bin/ameba` with zero issues (documentation and typing

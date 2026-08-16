@@ -13,6 +13,10 @@ if [ "$FAST" = 0 ]; then
   crystal build --no-codegen spec/spec_runner.cr
   echo "== examples (every README sample)"
   crystal build --no-codegen examples/all_examples.cr
+  if [ -d ../aws-record-ruby ]; then
+    echo "== parity with the Ruby gem's specs"
+    scripts/parity.py
+  fi
   echo "== docs";  crystal docs --output=docs/api >/dev/null
   echo "== unreachable (informational — review at phase boundaries, record in PORT_STATUS.md)"
   crystal tool unreachable --format json spec/spec_runner.cr | head -c 4000; echo

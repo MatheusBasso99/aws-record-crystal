@@ -134,7 +134,7 @@ against DynamoDB Local in 0.4 s.
 | record/table_config_spec.rb | 47 | 47 | + 1 extra |
 | record/table_migration_spec.rb | 21 | 21 | 1 is a compile-error fixture |
 | record/transactions_spec.rb | 12 | 12 | |
-| **total** | **372** | **372** | audited by description string |
+| **total** | **372** | **372** | audited by `scripts/parity.py` (description strings) |
 
 ## Coverage history
 
@@ -162,7 +162,7 @@ against DynamoDB Local in 0.4 s.
 | transactions/transactions.feature | 7 | 7 | `spec/integration/transactions_spec.cr` |
 | table_config/table_config.feature | 11 | 11 | `spec/integration/table_config_spec.cr` |
 | inheritance/inheritance.feature | 2 | 2 | `spec/integration/inheritance_spec.cr` |
-| **total** | **45** | **45** | audited by scenario name |
+| **total** | **45** | **45** | audited by `scripts/parity.py` (scenario names) |
 
 ## Intentional differences (mirror of docs/DIFFERENCES.md, one line each)
 
