@@ -270,4 +270,7 @@ taken are, by construction:
   **PORT COMPLETE — 2026-08-16, coverage 97.96 %, 736 unit examples (372/372 gem parity) + 45/45
   integration scenarios.** Remaining human decision: confirm the Apache-2.0 relicensing before
   publishing or tagging.
-
+- 2026-08-16 — docs (usability): the README's Lucky/Avram `config/dynamodb.cr` now shows the credentials
+  wiring explicitly, per environment (`Aws::DynamoDB::Credentials` from `ENV`, the way `config/database.cr`
+  does; stub in test, DynamoDB Local defaults in development, required `AWS_*` in production).
+  `examples/lucky_app.cr` (compiled by `check.sh`) and `compat/avram_app` follow. No `src/` change.

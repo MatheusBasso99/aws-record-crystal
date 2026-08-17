@@ -26,8 +26,19 @@ class Article < BaseModel
 end
 
 # --- this shard, side by side ---------------------------------------------
+# config/dynamodb.cr in the app: `Aws::DynamoDB::Credentials` next to `Avram::Credentials`, both
+# wired from ENV; stubbed here so the fixture never talks to the network.
+DYNAMODB = Aws::DynamoDB::Client.new(
+  stub_responses: true,
+  region: ENV["AWS_REGION"]? || "us-east-1",
+  credentials: Aws::DynamoDB::Credentials.new(
+    access_key_id: ENV["AWS_ACCESS_KEY_ID"]? || "local",
+    secret_access_key: ENV["AWS_SECRET_ACCESS_KEY"]? || "local",
+  ),
+)
+
 abstract class DynamoRecord < Aws::Record::Base
-  configure_client(client: Aws::DynamoDB::Client.new(stub_responses: true, region: "us-east-1"))
+  configure_client(client: DYNAMODB)
   disable_mutation_tracking
 end
 
@@ -51,6 +62,7 @@ session = Session.new(sid: "abc", created_at: Time.utc, roles: ["admin"])
 puts session.sid, session.created_at, session.roles, session.hits
 puts session.key_values
 puts Session.mutation_tracking_enabled?, ShortSession.hash_key, ShortSession.attribute_names
+puts Session.dynamodb_client.same?(DYNAMODB), DYNAMODB.config.credentials # inspect prints the key id only
 
 # Avram injects `.adapter` into every JSON::Serializable; our wire structs must survive it.
 described = Aws::DynamoDB::Types::DescribeTableOutput.from_json(%({"Table":{"TableStatus":"ACTIVE"}}))

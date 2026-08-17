@@ -313,12 +313,46 @@ configuration (`configure_client`, `disable_mutation_tracking`, …) that every 
 Without it, each model builds its own client — with its own connection pool — from the environment on
 first use.
 
-Build the client once, at boot:
+Build the client once, at boot, in a config file that shows where the credentials come from — the way
+`config/database.cr` spells out `ENV["DATABASE_URL"]`. `Aws::DynamoDB::Credentials` is the counterpart
+of `Avram::Credentials`, and the values themselves live in the environment — `.env` in development
+(gitignored, read by `LuckyEnv.load?(".env")` before `config/**` is required), the deployment's secret
+store in production — never in the file:
 
 ```crystal
-# config/dynamodb.cr
-DYNAMODB = Aws::DynamoDB::Client.new(region: "us-east-1")
+# config/dynamodb.cr — the wiring lives here; the values live in ENV, never in this file.
+DYNAMODB =
+  if LuckyEnv.production?
+    # Required: the app refuses to boot without them (`KeyError: Missing ENV key: "AWS_REGION"`).
+    Aws::DynamoDB::Client.new(
+      region: ENV["AWS_REGION"],
+      credentials: Aws::DynamoDB::Credentials.new(
+        access_key_id: ENV["AWS_ACCESS_KEY_ID"],
+        secret_access_key: ENV["AWS_SECRET_ACCESS_KEY"],
+        session_token: ENV["AWS_SESSION_TOKEN"]?, # only for temporary credentials
+      ),
+    )
+  elsif LuckyEnv.test?
+    # Nothing leaves the process; no credentials needed.
+    Aws::DynamoDB::Client.new(stub_responses: true)
+  else
+    # Development: DynamoDB Local (`docker/docker-compose.yml` starts one) accepts any key pair.
+    Aws::DynamoDB::Client.new(
+      region: ENV["AWS_REGION"]? || "us-east-1",
+      endpoint: ENV["AWS_ENDPOINT_URL_DYNAMODB"]? || "http://localhost:8000",
+      credentials: Aws::DynamoDB::Credentials.new(
+        access_key_id: ENV["AWS_ACCESS_KEY_ID"]? || "local",
+        secret_access_key: ENV["AWS_SECRET_ACCESS_KEY"]? || "local",
+      ),
+    )
+  end
 ```
+
+`Aws::DynamoDB::Client.new` with no arguments also works: it resolves region, credentials and endpoint
+from the same `AWS_*` variables and from `~/.aws/credentials`, in the order the AWS CLI uses. The
+explicit form is what a reader of `config/` expects, though, and a missing variable stops the boot
+instead of the first request. Credentials never reach a log — `Aws::DynamoDB::Credentials#inspect`
+prints only the access key id.
 
 Keep the shared base in its own file — it is the only place that mentions the client:
 
@@ -348,10 +382,11 @@ class Cart < DynamoRecord
 end
 ```
 
-In specs, `DynamoRecord.configure_client(client: Aws::DynamoDB::Client.new(stub_responses: true))` in
-the spec helper points every model at the stub. Do it before any model is used: as in the Ruby gem, a
-subclass remembers the client it resolved on first use, so reconfiguring the base later does not reach
-models that already have one (call `configure_client` on those directly).
+In specs the `LuckyEnv.test?` branch above already hands every model a stub client (the generated
+`spec/spec_helper.cr` sets `LUCKY_ENV=test` before requiring the app). To point one model somewhere
+else, call `configure_client` on it directly — and before that model is first used: as in the Ruby gem,
+a subclass remembers the client it resolved on first use, so reconfiguring the base later does not
+reach models that already have one.
 
 ### Creating the tables
 
